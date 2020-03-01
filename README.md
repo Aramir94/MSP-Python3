@@ -1,18 +1,20 @@
-![Altax](https://altax.net/images/altax.png "Altax")
-
-# pyMultiWii
+# MultiWii Serial Protocol (MSP) 
 
 
 Handles the MultiWii Serial Protocol to send/receive data from boards.
 
 This is a text based / console, no GUI, it works reading data from the multicopter and/or sending commands from a computer via a serial modem. I use this module for doing different request to my multicopters in order to control them wirelessly via a raspberry pie.
 
+## Caution
+
+This code is still somewhat under development, if you found a bug or a improvement, please let me know!!
+
 ## Installation 
 
 To install with pip run the following command from this directory,
 
 ```
-pip install .
+pip install msp-python3
 ```
 
 ## How?
@@ -20,17 +22,11 @@ pip install .
 Just create a MultiWii object that receives the serial port address as parameter and then you can ask for a MSP command by using the function getData, an explicit example looks like this:
 
 ```
-from pymultiwii import MultiWii
+from msp.multiwii import MultiWii
 
 serialPort = "/dev/ttyS0"
 board = MultiWii(serialPort)
-    while True:
-		print board.getData(MultiWii.ATTITUDE)
 ```
-
-With the example above, you will see a stream of data on your terminal.
-
-[![ScreenShot](http://img.youtube.com/vi/TpcQ-TOuOA0/0.jpg)](https://www.youtube.com/watch?v=TpcQ-TOuOA0)
 
 ## MultiWii Serial Protocol
 
@@ -42,13 +38,17 @@ $<header>,<direction>,<size>,<command>,<crc>$
 
 where:
 
-* header: the ASCII characters `$\$M$`
-* direction: the ASCII character `$<$` if the message goes to the MultiWii board or `$>$` if the message is coming from the board
+* header: the ASCII characters `$M`
+* direction: the ASCII character `<` if the message goes to the MultiWii board or `>` if the message is coming from the board
 * size: number of data bytes, binary. Can be zero as in the case of a data request to the board
 * command: message id of MSP
 * data: values to be sent. UINT16 values are LSB first
-* crc: (cyclic redundancy check) checksum, XOR of `$<size>,<command>$` and each data byte into a zero sum
+* crc: (cyclic redundancy check) checksum, XOR of `<size>,<command>` and each data byte into a zero sum
 
+For a complete list of Protocols and responses that this project is based off of please visit [MultiWii Serial Protocol - Web Archive](https://web.archive.org/web/20190812122529/http://www.multiwii.com/wiki/index.php?title=Multiwii_Serial_Protocol).
+
+Stack overflow [example](https://stackoverflow.com/questions/42877001/how-do-i-read-gyro-information-from-cleanflight-using-msp) of MSP 
+ 
 ### Data Flow
 
 There is basically three types of messages to interact with a MultiWii board. Those are command, request and response. Command is an incoming message without implicit outgoing response from the board, request is an incoming message with implicit outgoing response while response is the outgoing message resulting from an incoming request.
@@ -62,15 +62,17 @@ The entire implementation of this module does not include a sleep function, whic
 The module is also designed to be extremely simple to use, the next code will request and print (to the host computer) the orientation of the a MultiWii board connected to a USB port:
 
 ```
-from pyMultiwii import MultiWii
+from msp.multiwii import MultiWii
+from msp.message_ids import MessageIDs
 from sys import stdout
 
 if __name__ == "__main__":
     board = MultiWii("/dev/ttyUSB0")
     try:
+        data_length = 0
         while True:
-            board.getData(MultiWii.ATTITUDE)
-            print board.attitude 
+            board.send(data_length, MessageIDs.ATTITUDE)
+            print(board.attitude) 
     except Exception,error:
         print "Error on Main: "+str(error)
 ```
@@ -135,30 +137,3 @@ This code has no ```time.sleep()```, so, its very fast and efficient. The output
 ```
 
 Using different devices and newer boards you can achieve greater rates of communication, using an oDroid U3 and a naze32 I have achieved close to 300hz.
-
-## Video usages:
-
-[![Multiwii joystick (naze32)](http://img.youtube.com/vi/XyyfGp-IomE/0.jpg)](http://www.youtube.com/watch?v=XyyfGp-IomE)
-
-[![Drone Pilot - Position hold controller (raspberry pi + naze32)](http://img.youtube.com/vi/oN2S1qJaQNU/0.jpg)](http://www.youtube.com/watch?v=oN2S1qJaQNU)
-
-[![Drone Pilot - Trajectory controller (raspberry pi + naze32)](http://img.youtube.com/vi/k6tswW7M_-8/0.jpg)](http://www.youtube.com/watch?v=k6tswW7M_-8)
-
-
-## Caution
-
-This code is still somewhat under development, if you found a bug or a improvement, please let me know!!
-
-## Why?
-
-I'm doing systems identification of multicopters being flown by me via a multiwii board. Why do I want to do this? I want to do very precise navigation algorithms using a motion capture system. 
-
-Systems identification is a statistical method to build mathematical models of the multicopters, to have excellent control we require a perfect mathematical model. In order to do a good sysid we require data, lots of data, data coming from the board as well as the pilot and the position in the space (motion capture), so, I require raw imu (accelerometers and gyroscopes), pilot commands (rc channels) and position (x,y,z).
-
-So far, I have a position controller working with the multiwii board being flow by simulink using data from the motion capture system and just sending rc channels via a 3DR robotics radio (roll, pitch, yaw, throttle), you can see a video about that here [TEGO indoor position control](https://vimeo.com/105761692)
-
-I works nice... but I want it to work even nicer and better!!! so, we need all the mathematical models and parameters to be as precise as possible, ergo, systems identification required.
-
-I knew that the 3DR radio was not good enough to send data in a fast way to the ground station... So, I put onboard a Raspberry Pie, this computer ask data to the multwii and also to the motion capture system, and saves it... thats it for now.
-
-![MultWii and Raspberry Pie on a quadcopter](http://www.multiwii.com/forum/download/file.php?id=3360&mode=view "MultWii and Raspberry Pie on a quadcopter")
