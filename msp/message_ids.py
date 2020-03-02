@@ -20,7 +20,8 @@ class MessageIDs:
     PIDNAMES = 117
     WP = 118
     BOXIDS = 119
-    RC_RAW_IMU = 121
+    SERVO_CONF = 120
+
     SET_RAW_RC = 200
     SET_RAW_GPS = 201
     SET_PID = 202
@@ -32,9 +33,13 @@ class MessageIDs:
     RESET_CONF = 208
     SET_WP = 209
     SWITCH_RC_SERIAL = 210
-    IS_SERIAL = 211
-    DEBUG = 254
-    VTX_CONFIG = 88
-    VTX_SET_CONFIG = 89
-    EEPROM_WRITE = 250
-    REBOOT = 68
+    SET_HEAD = 211
+    SET_SERVO_CONF = 212
+
+
+    # EEPROM_WRITE = 250
+    # DEBUG = 254
+    #
+    # REBOOT = 68
+    # VTX_CONFIG = 88
+    # VTX_SET_CONFIG = 89
