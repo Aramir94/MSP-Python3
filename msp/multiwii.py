@@ -1,6 +1,7 @@
 import serial
 import struct
 import time
+
 from msp.message_ids import MessageIDs
 
 class MultiWii:
