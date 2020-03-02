@@ -33,10 +33,12 @@ class MultiWii:
 
         self.PRINT = 1
 
+
+
         self.ser = None
         self.init_comms(ser_port)
 
-        """Time to wait until the board becomes operational"""
+        # Time to wait until the board becomes operational
         wakeup = 2
         try:
             self.ser.open()
@@ -51,9 +53,10 @@ class MultiWii:
 
     def init_comms(self, ser_port):
         """
+        Initializes the serial communications port and establishes connection with the Flight Controller.
 
-        :param ser_port:
-        :return:
+        :param ser_port: Example: /dev/ttyS0
+        :return: None
         """
         self.ser = serial.Serial()
         self.ser.port = ser_port
@@ -68,16 +71,24 @@ class MultiWii:
         # self.ser.writeTimeout = 2
 
     def arm(self):
-        timer = 0
-        start = time.time()
+        """
+        Sends an arming command to the Flight Controller.
+
+        :return: None
+        """
+
         # Roll, Pitch, Throttle, Yaw
         data = [1500, 1500, 1000, 2000]
         self.send(8, MessageIDs.SET_RAW_RC, data)
         self.receive()
 
     def disarm(self):
-        timer = 0
-        start = time.time()
+        """
+        Sends a disarming command to the Flight Controller.
+
+        :return: None
+        """
+
         # Roll, Pitch, Throttle, Yaw
         data = [1500, 1500, 1000, 1000]
         self.send(8, MessageIDs.SET_RAW_RC, data)
@@ -115,13 +126,14 @@ class MultiWii:
     #         different = (self.vtxConfig['band'] != band) | (self.vtxConfig['channel'] != channel) | (
     #                     self.vtxConfig['power'] != power)
 
-    def send(self, data_length, code, data=None):
+    def send(self, data_length, code: MessageIDs, data=None):
         """
+        Crafts and sends the command packet to be sent over the serial interface to the Flight Controller.
 
-        :param data_length:
-        :param code:
-        :param data:
-        :return:
+        :param data_length: The number of 'shorts' required to transmit the data.
+        :param code: The MessageID of the command to be sent
+        :param data: The data (if required) to be transmitted. Can be left blank if the data_length = 0.
+        :return: None
         """
 
         if data is None:
