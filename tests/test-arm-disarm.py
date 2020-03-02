@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""test-send.py: Test script to send RC commands to a MultiWii Board."""
+"""test-arm-disarm.py: Test script to send RC commands to a MultiWii Board."""
 
 from msp.multiwii import MultiWii
 import time
