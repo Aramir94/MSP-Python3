@@ -181,9 +181,6 @@ class MultiWii(Thread):
         :param data: The data (if required) to be transmitted. Can be left blank if the data_length = 0.
         :return: None
         """
-        if self.__print:
-            print("sending")
-
         if data is None:
             data = []
 
@@ -212,15 +209,15 @@ class MultiWii(Thread):
                 while True:
                     header = self.ser.read().decode('utf-8')
                     if header == '$':
-                        if self.__print:
-                            print("receiving")
                         header = header + self.ser.read(2).decode('utf-8')
                         break
 
                 data_length = struct.unpack('<B', self.ser.read())[0]
                 code = struct.unpack('<B', self.ser.read())[0]
                 data = self.ser.read(data_length)
-
+                if self.__print:
+                    print("Receiving - " + str(code))
+                checksum = struct.unpack('<B', self.ser.read())[0]
                 # TODO check Checksum
                 # total_data = ['$'.encode('utf-8'), 'M'.encode('utf-8'), '<'.encode('utf-8'), data_length, code] + data
                 # structure = struct.pack('<2B%dH' % len(data), *total_data[3:len(total_data)])
@@ -229,7 +226,7 @@ class MultiWii(Thread):
                 # for i in structure:
                 #     checksum = checksum ^ i
                 # total_data.append(checksum)
-                checksum = struct.unpack('<B', self.ser.read())[0]
+
 
                 # print("code: " + str(code))
                 # print("data_length: " + str(data_length))
