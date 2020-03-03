@@ -150,13 +150,9 @@ class MultiWii(Thread):
         self.__running = False
 
     def __idle(self):
-        if self.__print:
-            print("Idling - IMU")
         # TODO create looping control logic
         self.__send(0, MessageIDs.RAW_IMU)
         self.__send(0, MessageIDs.ALTITUDE)
-        if self.__print:
-            print("Idling - ATTITUDE")
         self.__send(0, MessageIDs.ATTITUDE)
         time.sleep(.5)
 
