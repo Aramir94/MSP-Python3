@@ -1,26 +1,46 @@
 import serial
 import struct
 import time
+import queue
+from threading import Thread, Lock
+from threading import current_thread
 
 from msp.message_ids import MessageIDs
 
-class MultiWii:
+
+class MultiWii(Thread):
     """Class initialization"""
 
     def __init__(self, ser_port):
+        super(MultiWii, self).__init__(
+            name="Comms_Tx"
+        )
 
-        self.code_action_map = self.create_action_map()
+        # Private Attributes
+        self.__lock = Lock()
+        self.__running = True
+        self.__is_armed = False
+        self.__q = queue.Queue()
+        self.__timeout = 1.0/60
 
-        self.ident = Identification()
+        self.__rx_thread = Thread(
+            target=self.__receive,
+            args=[],
+            name="Comms_Rx",
+            daemon=True
+        )
+
+        self.__print = True
+        self.__code_action_map = self.__create_action_map()
+
+        # Public Attributes
+        self.identification = Identification()
         self.pid_coef = PIDCoefficients()
         self.rc_channels = Channels()
 
         self.raw_imu = IMU()
-
         self.motor = Motor()
-
         self.attitude = Attitude()
-
         self.altitude = Altitude()
 
         self.vtx_config = {
@@ -32,172 +52,24 @@ class MultiWii:
             'unknown': 0
         }
 
-        self.PRINT = 1
-
-
-
         self.ser = None
-        self.init_comms(ser_port)
+        self.__init_comms(ser_port)
 
         # Time to wait until the board becomes operational
         wakeup = 2
         try:
             self.ser.open()
-            if self.PRINT:
+            if self.__print:
                 print("Waking up board on " + self.ser.port + "...")
             for i in range(1, wakeup):
-                if self.PRINT:
+                if self.__print:
                     print(wakeup - i)
                 time.sleep(1)
         except Exception as error:
             print("\n\nError opening " + self.ser.port + " port.\n" + str(error) + "\n\n")
 
-    def init_comms(self, ser_port):
-        """
-        Initializes the serial communications port and establishes connection with the Flight Controller.
-
-        :param ser_port: Example: /dev/ttyS0
-        :return: None
-        """
-        self.ser = serial.Serial()
-        self.ser.port = ser_port
-        self.ser.baudrate = 115200
-        self.ser.bytesize = serial.EIGHTBITS
-        self.ser.parity = serial.PARITY_NONE
-        self.ser.stopbits = serial.STOPBITS_ONE
-        self.ser.timeout = None
-        self.ser.xonxoff = False
-        self.ser.rtscts = False
-        self.ser.dsrdtr = False
-        # self.ser.writeTimeout = 2
-
-    def arm(self):
-        """
-        Sends an arming command to the Flight Controller.
-
-        :return: None
-        """
-
-        # Roll, Pitch, Throttle, Yaw
-        data = [1500, 1500, 1000, 2000]
-        self.send(8, MessageIDs.SET_RAW_RC, data)
-        self.receive()
-
-    def disarm(self):
-        """
-        Sends a disarming command to the Flight Controller.
-
-        :return: None
-        """
-
-        # Roll, Pitch, Throttle, Yaw
-        data = [1500, 1500, 1000, 1000]
-        self.send(8, MessageIDs.SET_RAW_RC, data)
-        self.receive()
-
-    # def setPID(self, pd):
-    #     nd = []
-    #     for i in np.arange(1, len(pd), 2):
-    #         nd.append(pd[i] + pd[i + 1] * 256)
-    #     data = pd
-    #     print("PID sending:", data)
-    #     self.sendCMDreceiveATT(30, SET_PID, data)
-    #     self.sendCMDreceiveATT(0, EEPROM_WRITE, [])
-
-    # def setVTX(self, band, channel, power):
-    #     band_channel = ((band - 1) << 3) | (channel - 1)
-    #     t = None
-    #     while t == None:
-    #         t = self.getData(VTX_CONFIG)
-    #     different = (self.vtxConfig['band'] != band) | (self.vtxConfig['channel'] != channel) | (
-    #                 self.vtxConfig['power'] != power)
-    #     data = [band_channel, power, self.vtxConfig['pit']]
-    #     while different:
-    #         self.sendCMDreceiveATT(4, VTX_SET_CONFIG, data, 'H2B')
-    #         time.sleep(1)
-    #         self.sendCMDreceiveATT(0, EEPROM_WRITE, [], '')
-    #         self.ser.close()
-    #         time.sleep(3)
-    #         self.ser.open()
-    #         time.sleep(3)
-    #         t = None
-    #         while t == None:
-    #             t = self.getData(VTX_CONFIG)
-    #         print(t)
-    #         different = (self.vtxConfig['band'] != band) | (self.vtxConfig['channel'] != channel) | (
-    #                     self.vtxConfig['power'] != power)
-
-    def send(self, data_length, code: MessageIDs, data=None):
-        """
-        Crafts and sends the command packet to be sent over the serial interface to the Flight Controller.
-
-        :param data_length: The number of 'shorts' required to transmit the data.
-        :param code: The MessageID of the command to be sent
-        :param data: The data (if required) to be transmitted. Can be left blank if the data_length = 0.
-        :return: None
-        """
-
-        if data is None:
-            data = []
-
-        total_data = ['$'.encode('utf-8'), 'M'.encode('utf-8'), '<'.encode('utf-8'), data_length, code] + data
-        structure = struct.pack('<2B%dH' % len(data), *total_data[3:len(total_data)])
-
-        checksum = 0
-        for i in structure:
-            checksum = checksum ^ i
-        total_data.append(checksum)
-
-        try:
-            b = self.ser.write(struct.pack('<3c2B%dHB' % len(data), *total_data))
-            # self.ser.flushOutput()
-        except Exception as error:
-            import traceback
-            print("\n\nError in send.")
-            print("(" + str(error) + ")")
-            traceback.print_exc()
-
-    def receive(self):
-        try:
-            while True:
-                header = self.ser.read().decode('utf-8')
-                if header == '$':
-                    header = header + self.ser.read(2).decode('utf-8')
-                    break
-
-            data_length = struct.unpack('<B', self.ser.read())[0]
-            code = struct.unpack('<B', self.ser.read())[0]
-            data = self.ser.read(data_length)
-            checksum = struct.unpack('<B', self.ser.read())[0]
-
-            # print("code: " + str(code))
-            print("data_length: " + str(data_length))
-            # print("data: " + str(data))
-            # print("checksum: " + str(checksum))
-
-            self.ser.flushInput()
-
-        except Exception as error:
-            import traceback
-            print("\n\nError in receive.")
-            print("(" + str(error) + ")")
-            traceback.print_exc()
-            return
-
-        if not data_length > 0:
-            return
-
-        temp = struct.unpack('<' + 'h' * int(data_length / 2), data)
-        try:
-            self.code_action_map[code](temp)
-        except KeyError as err:
-            print(err)
-
-    def calibrate_acc(self):
-        self.send(0, MessageIDs.ACC_CALIBRATION, [])
-        self.receive()
-
-    def create_action_map(self):
+    # Private Methods
+    def __create_action_map(self):
         code_action_map = {}
         code_action_map[MessageIDs.IDENT] = self.get_ident
         """
@@ -248,22 +120,172 @@ class MultiWii:
 
         return code_action_map
 
+    def __init_comms(self, ser_port):
+        """
+        Initializes the serial communications port and establishes connection with the Flight Controller.
+
+        :param ser_port: Example: /dev/ttyS0
+        :return: None
+        """
+        self.ser = serial.Serial()
+        self.ser.port = ser_port
+        self.ser.baudrate = 115200
+        self.ser.bytesize = serial.EIGHTBITS
+        self.ser.parity = serial.PARITY_NONE
+        self.ser.stopbits = serial.STOPBITS_ONE
+        self.ser.timeout = None
+        self.ser.xonxoff = False
+        self.ser.rtscts = False
+        self.ser.dsrdtr = False
+        # self.ser.writeTimeout = 2
+
+        if self.__print:
+            print("Serial Communication Initialized")
+
+    def __on_thread(self, function, *args, **kwargs):
+        self.__q.put((function, args, kwargs))
+
+    def __shutdown(self):
+        print(current_thread().name + " - Shutting Down")
+        self.__running = False
+
+    def __idle(self):
+        # TODO create looping control logic
+        self.__send(0, MessageIDs.RAW_IMU)
+        self.__send(0, MessageIDs.ALTITUDE)
+        self.__send(0, MessageIDs.ATTITUDE)
+
+    def __arm(self):
+        # Roll, Pitch, Throttle, Yaw
+        data = [1500, 1500, 1000, 2000]
+        self.__send(8, MessageIDs.SET_RAW_RC, data)
+        self.__is_armed = True
+        # TODO use a different channel to arm the drone
+
+    def __disarm(self):
+        # Roll, Pitch, Throttle, Yaw
+        data = [1500, 1500, 1000, 1000]
+        self.__send(8, MessageIDs.SET_RAW_RC, data)
+        self.__is_armed = False
+        # TODO use a different channel to disarm the drone
+
+    def __send(self, data_length, code: MessageIDs, data=None):
+        """
+        Crafts and sends the command packet to be sent over the serial interface to the Flight Controller.
+
+        :param data_length: The number of 'shorts' required to transmit the data.
+        :param code: The MessageID of the command to be sent
+        :param data: The data (if required) to be transmitted. Can be left blank if the data_length = 0.
+        :return: None
+        """
+        if data is None:
+            data = []
+
+        total_data = ['$'.encode('utf-8'), 'M'.encode('utf-8'), '<'.encode('utf-8'), data_length, code] + data
+        structure = struct.pack('<2B%dH' % len(data), *total_data[3:len(total_data)])
+
+        checksum = 0
+        for i in structure:
+            checksum = checksum ^ i
+        total_data.append(checksum)
+
+        try:
+            b = self.ser.write(struct.pack('<3c2B%dHB' % len(data), *total_data))
+            # self.ser.flushOutput()
+        except Exception as error:
+            import traceback
+            print("\n\nError in send.")
+            print("(" + str(error) + ")")
+            traceback.print_exc()
+
+    def __receive(self):
+        if self.__print:
+            print("Starting " + current_thread().name)
+        while self.__running:
+            try:
+                while True:
+                    header = self.ser.read().decode('utf-8')
+                    if header == '$':
+                        header = header + self.ser.read(2).decode('utf-8')
+                        break
+
+                data_length = struct.unpack('<B', self.ser.read())[0]
+                code = struct.unpack('<B', self.ser.read())[0]
+                data = self.ser.read(data_length)
+                # TODO Add logging
+                # if self.__print:
+                #     print("Receiving - " + str(code))
+                checksum = struct.unpack('<B', self.ser.read())[0]
+                # TODO check Checksum
+                # total_data = ['$'.encode('utf-8'), 'M'.encode('utf-8'), '<'.encode('utf-8'), data_length, code] + data
+                # structure = struct.pack('<2B%dH' % len(data), *total_data[3:len(total_data)])
+                #
+                # checksum = 0
+                # for i in structure:
+                #     checksum = checksum ^ i
+                # total_data.append(checksum)
+
+
+                # print("code: " + str(code))
+                # print("data_length: " + str(data_length))
+                # print("data: " + str(data))
+                # print("checksum: " + str(checksum))
+
+                self.ser.flushInput()
+
+            except Exception as error:
+                import traceback
+                print("\n\nError in receive.")
+                print("(" + str(error) + ")")
+                traceback.print_exc()
+                return
+
+            if not data_length > 0:
+                return
+
+            temp = struct.unpack('<' + 'h' * int(data_length / 2), data)
+            try:
+                self.__code_action_map[code](temp)
+            except KeyError as err:
+                print(err)
+
+    # Public Methods
+    def shutdown(self):
+        self.__on_thread(self.__shutdown)
+
+    def run(self):
+        self.__rx_thread.start()
+
+        while self.__running:
+            try:
+                function, args, kwargs = self.__q.get(timeout=self.__timeout)
+                function(*args, **kwargs)
+            except queue.Empty:
+                self.__idle()
+
+    def is_armed(self):
+        return self.__is_armed
+
+    def arm(self):
+        self.__on_thread(self.__arm)
+
+    def disarm(self):
+        self.__on_thread(self.__disarm)
+
+    def calibrate_acc(self):
+        self.__on_thread(self.__send, [0, MessageIDs.ACC_CALIBRATION, []])
+
     def get_ident(self, data):
-        self.ident.version = data[0]
-        self.ident.multi_type = data[1]
-        self.ident.msp_version = data[2]
-        self.ident.capability = data[3]
-        self.ident.timestamp = None
+        self.identification.version = data[0]
+        self.identification.multi_type = data[1]
+        self.identification.msp_version = data[2]
+        self.identification.capability = data[3]
+        self.identification.timestamp = None
 
     def get_status(self, data):
         pass
 
     def get_rc(self, data):
-        """
-
-        :param data:
-        :return:
-        """
         self.rc_channels.roll = data[0]
         self.rc_channels.pitch = data[1]
         self.rc_channels.yaw = data[2]
@@ -294,13 +316,6 @@ class MultiWii:
         self.altitude.estalt = data[0]
         self.altitude.variometer = data[1]
 
-    def request_identification(self):
-        self.send(0, MessageIDs.IDENT)
-        self.receive()
-
-    def request_imu(self):
-        self.send(0, MessageIDs.RAW_IMU)
-        self.receive()
 
 class Identification:
     def __init__(self):
@@ -309,6 +324,7 @@ class Identification:
         self.msp_version = 0
         self.capability = 0
         self.timestamp = None
+
 
 class PIDCoefficients:
     def __init__(self):
@@ -326,6 +342,7 @@ class PIDCoefficients:
 
         self.timestamp = None
 
+
 class Channels:
     def __init__(self):
         self.roll = 0
@@ -333,6 +350,7 @@ class Channels:
         self.yaw = 0
         self.throttle = 0
         self.timestamp = 0
+
 
 class IMU:
     def __init__(self):
@@ -350,6 +368,7 @@ class IMU:
 
         self.timestamp = None
 
+
 class Motor:
     def __init__(self):
         self.m1 = 0
@@ -358,6 +377,7 @@ class Motor:
         self.m4 = 0
 
         self.timestamp = None
+
 
 class Attitude:
     def __init__(self):
@@ -371,6 +391,7 @@ class Attitude:
         result = "Attitude: \n\t"
         temp_dict = {'angx': self.angx, 'angy': self.angy, 'heading': self.heading}
         return result + str(temp_dict)
+
 
 class Altitude:
     def __init__(self):
