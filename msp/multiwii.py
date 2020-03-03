@@ -147,6 +147,8 @@ class MultiWii(Thread):
         self.__running = False
 
     def __idle(self):
+        if self.__print:
+            print("idling")
         # TODO create looping control logic
         self.__send(0, MessageIDs.IDENT)
         self.__send(0, MessageIDs.RAW_IMU)
@@ -176,6 +178,8 @@ class MultiWii(Thread):
         :param data: The data (if required) to be transmitted. Can be left blank if the data_length = 0.
         :return: None
         """
+        if self.__print:
+            print("sending")
 
         if data is None:
             data = []
@@ -203,6 +207,8 @@ class MultiWii(Thread):
                 while True:
                     header = self.ser.read().decode('utf-8')
                     if header == '$':
+                        if self.__print:
+                            print("receiving")
                         header = header + self.ser.read(2).decode('utf-8')
                         break
 
