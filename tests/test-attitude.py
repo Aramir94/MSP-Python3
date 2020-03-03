@@ -12,7 +12,7 @@ if __name__ == "__main__":
         fc.start()
         while True:
             print(fc.attitude)
-            time.sleep(1)
+            time.sleep(.1)
 
     except Exception as error:
         import traceback
