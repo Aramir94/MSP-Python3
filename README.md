@@ -74,29 +74,25 @@ the orientation of the a MultiWii board connected to a USB port:
 
 ```
 from msp.multiwii import MultiWii
-from msp.message_ids import MessageIDs
-from sys import stdout
 
 if __name__ == "__main__":
-    board = MultiWii("/dev/ttyUSB0")
+    fc = MultiWii("/dev/ttyS0")
     try:
-        data_length = 0
+        fc.start()
         while True:
-            board.send(data_length, MessageIDs.ATTITUDE)
-            print(board.attitude) 
-    except Exception,error:
-        print "Error on Main: "+str(error)
-```
+            print(fc.attitude)
 
-This module can achieve communication back and forth of 300hz, this was achieved using a Naze32 
-(32bits micro-controller) board and a Odroid U3. And around 62.5hz when using a MultiWii AIO 2.0 
-(8bits micro-controller) board and a Raspberry Pi.
+    except Exception as error:
+        import traceback
+        print("Error on Main: " + str(error))
+        traceback.print_exc()
+```
 
 ## Boards update
 
 ### 8bit boards
 
-When using an 8bit MultiWii board, please change the `wakeup` time on the main file at line 84. The old boards need 
+When using an 8bit MultiWii board, please change the `wakeup` time. The old boards need 
 more than 10 seconds to boot up in order to be ready to start asking for data. A safe time would be:
 
 ```
@@ -129,32 +125,6 @@ radio will not work... (at least on the releases I'm using).
 Then you can carefully test my example "test-arm-disarm.py"... You will see the motors spin for 3 seconds. 
 ¡¡BE CAREFUL!!
 
-## Example:
-
-This code has no ```time.sleep()```, so, its very fast and efficient. The output looks like this when asking or 
-ATTITUDE:
-
-```
-{'timestamp': 1417432436.878697, 'elapsed': 0.016, 'angx': -26.8, 'angy': -24.8, 'heading': -84.0}
-{'timestamp': 1417432436.894663, 'elapsed': 0.016, 'angx': -26.8, 'angy': -24.7, 'heading': -84.0}
-{'timestamp': 1417432436.910673, 'elapsed': 0.016, 'angx': -26.7, 'angy': -24.8, 'heading': -84.0}
-{'timestamp': 1417432436.926812, 'elapsed': 0.016, 'angx': -26.7, 'angy': -24.7, 'heading': -84.0}
-{'timestamp': 1417432436.942629, 'elapsed': 0.016, 'angx': -26.7, 'angy': -24.7, 'heading': -84.0}
-{'timestamp': 1417432436.958657, 'elapsed': 0.016, 'angx': -26.7, 'angy': -24.6, 'heading': -84.0}
-{'timestamp': 1417432436.974627, 'elapsed': 0.016, 'angx': -26.7, 'angy': -24.6, 'heading': -84.0}
-{'timestamp': 1417432436.990591, 'elapsed': 0.016, 'angx': -26.7, 'angy': -24.5, 'heading': -84.0}
-{'timestamp': 1417432437.006598, 'elapsed': 0.016, 'angx': -26.7, 'angy': -24.5, 'heading': -84.0}
-{'timestamp': 1417432437.022676, 'elapsed': 0.016, 'angx': -26.6, 'angy': -24.5, 'heading': -84.0}
-{'timestamp': 1417432437.038604, 'elapsed': 0.016, 'angx': -26.6, 'angy': -24.4, 'heading': -85.0}
-{'timestamp': 1417432437.054619, 'elapsed': 0.016, 'angx': -26.7, 'angy': -24.4, 'heading': -85.0}
-{'timestamp': 1417432437.070593, 'elapsed': 0.016, 'angx': -26.6, 'angy': -24.3, 'heading': -85.0}
-{'timestamp': 1417432437.086576, 'elapsed': 0.016, 'angx': -26.6, 'angy': -24.3, 'heading': -85.0}
-{'timestamp': 1417432437.102768, 'elapsed': 0.016, 'angx': -26.7, 'angy': -24.2, 'heading': -85.0}
-{'timestamp': 1417432437.118586, 'elapsed': 0.016, 'angx': -26.6, 'angy': -24.2, 'heading': -85.0}
-{'timestamp': 1417432437.134683, 'elapsed': 0.016, 'angx': -26.6, 'angy': -24.2, 'heading': -85.0}
-{'timestamp': 1417432437.150524, 'elapsed': 0.016, 'angx': -26.6, 'angy': -24.1, 'heading': -85.0}
-{'timestamp': 1417432437.166525, 'elapsed': 0.016, 'angx': -26.6, 'angy': -24.1, 'heading': -85.0}
-```
-
-Using different devices and newer boards you can achieve greater rates of communication, using an oDroid U3 and a naze32
- I have achieved close to 300hz.
+### Additional Links
+[Cleanflight Checklist](https://www.propwashed.com/flight-controller-software-set-up-checklist/)
+ is very helpful for ensuring that your drone has been configured correctly. 
