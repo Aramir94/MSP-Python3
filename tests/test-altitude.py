@@ -7,11 +7,5 @@ from msp.message_ids import MessageIDs
 
 if __name__ == "__main__":
     fc = MultiWii("/dev/ttyS0")
-    try:
-
-        fc.send(0, MessageIDs.ALTITUDE)
-        fc.receive()
+    while True:
         print(fc.altitude)
-
-    except Exception as error:
-        print("Error on Main: " + str(error))

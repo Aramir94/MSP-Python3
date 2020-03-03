@@ -10,10 +10,8 @@ if __name__ == "__main__":
     fc = MultiWii("/dev/ttyS0")
     try:
         while True:
-            fc.send(0, MessageIDs.ATTITUDE)
-            fc.receive()
             print(fc.attitude)
-            time.sleep(2)
+            time.sleep(1)
 
     except Exception as error:
         import traceback
