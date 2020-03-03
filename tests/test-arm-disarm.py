@@ -8,12 +8,15 @@ import time
 if __name__ == "__main__":
 
     #board = MultiWii("/dev/tty.usbserial-AM016WP4")
-    board = MultiWii("/dev/ttyS0")
+    fc = MultiWii("/dev/ttyS0")
+    fc.start()
 
     print("Arming!")
-    board.arm()
+    fc.arm()
     print("Board is armed now!")
     print("In 3 seconds it will disarm...")
     time.sleep(3)
-    board.disarm()
+    fc.disarm()
     print("Disarmed.")
+
+    fc.shutdown()

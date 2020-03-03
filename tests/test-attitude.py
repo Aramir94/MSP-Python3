@@ -3,8 +3,6 @@
 """test-attitude.py: Test script to send RC commands to a MultiWii Board."""
 
 from msp.multiwii import MultiWii
-from msp.message_ids import MessageIDs
-import time
 
 if __name__ == "__main__":
     fc = MultiWii("/dev/ttyS0")
