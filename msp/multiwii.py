@@ -154,8 +154,6 @@ class MultiWii(Thread):
             print("Idling - IMU")
         # TODO create looping control logic
         self.__send(0, MessageIDs.RAW_IMU)
-        if self.__print:
-            print("Idling - ALTITUDE")
         self.__send(0, MessageIDs.ALTITUDE)
         if self.__print:
             print("Idling - ATTITUDE")
