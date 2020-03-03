@@ -154,7 +154,7 @@ class MultiWii(Thread):
         self.__send(0, MessageIDs.RAW_IMU)
         self.__send(0, MessageIDs.ALTITUDE)
         self.__send(0, MessageIDs.ATTITUDE)
-        time.sleep(.5)
+        time.sleep(.25)
 
     def __arm(self):
         # Roll, Pitch, Throttle, Yaw
@@ -213,8 +213,9 @@ class MultiWii(Thread):
                 data_length = struct.unpack('<B', self.ser.read())[0]
                 code = struct.unpack('<B', self.ser.read())[0]
                 data = self.ser.read(data_length)
-                if self.__print:
-                    print("Receiving - " + str(code))
+                # TODO Add logging
+                # if self.__print:
+                #     print("Receiving - " + str(code))
                 checksum = struct.unpack('<B', self.ser.read())[0]
                 # TODO check Checksum
                 # total_data = ['$'.encode('utf-8'), 'M'.encode('utf-8'), '<'.encode('utf-8'), data_length, code] + data
