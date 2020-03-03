@@ -157,6 +157,7 @@ class MultiWii(Thread):
         self.__send(0, MessageIDs.RAW_IMU)
         self.__send(0, MessageIDs.ALTITUDE)
         self.__send(0, MessageIDs.ATTITUDE)
+        time.sleep(.5)
 
     def __arm(self):
         # Roll, Pitch, Throttle, Yaw
