@@ -9,6 +9,7 @@ import time
 if __name__ == "__main__":
     fc = MultiWii("/dev/ttyS0")
     try:
+        fc.start()
         while True:
             print(fc.attitude)
             time.sleep(1)

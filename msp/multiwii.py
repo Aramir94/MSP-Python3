@@ -139,6 +139,9 @@ class MultiWii(Thread):
         self.ser.dsrdtr = False
         # self.ser.writeTimeout = 2
 
+        if self.__print:
+            print("Serial Communication Initialized")
+
     def __on_thread(self, function, *args, **kwargs):
         self.__q.put((function, args, kwargs))
 
@@ -202,6 +205,8 @@ class MultiWii(Thread):
             traceback.print_exc()
 
     def __receive(self):
+        if self.__print:
+            print("Starting " + current_thread().name)
         while self.__running:
             try:
                 while True:
