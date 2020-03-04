@@ -9,7 +9,7 @@ if __name__ == "__main__":
     try:
         fc.start()
         while True:
-            print(fc.altitude)
+            print(fc.get_altitude())
             
     except Exception as err:
         print("Error on Main: " + str(err))

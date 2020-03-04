@@ -9,7 +9,7 @@ if __name__ == "__main__":
     try:
         fc.start()
         while True:
-            print(fc.attitude)
+            print(fc.get_attitude())
 
     except Exception as error:
         import traceback
