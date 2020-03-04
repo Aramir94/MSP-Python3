@@ -246,14 +246,16 @@ class MultiWii(Thread):
         self.__on_thread(self.__shutdown)
 
     def run(self):
-        self.__rx_thread.start()
-
-        while self.__running:
-            try:
-                function, args, kwargs = self.__q.get(timeout=self.__timeout)
-                function(*args, **kwargs)
-            except queue.Empty:
-                self.__idle()
+        try:
+            self.__rx_thread.start()
+            while self.__running:
+                try:
+                    function, args, kwargs = self.__q.get(timeout=self.__timeout)
+                    function(*args, **kwargs)
+                except queue.Empty:
+                    self.__idle()
+        finally:
+            self.__ser.close()
 
     def is_armed(self):
         return self.__is_armed
