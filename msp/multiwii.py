@@ -69,49 +69,32 @@ class MultiWii(Thread):
         code_action_map = {}
         code_action_map[MessageIDs.IDENT] = self.get_ident
         """
-            STATUS
+            STATUS = 101
         """
         code_action_map[MessageIDs.RAW_IMU] = self.get_imu
         """
-            SERVO
-            MOTOR
+            SERVO = 103
+            MOTOR = 104
         """
         code_action_map[MessageIDs.RC] = self.__rc_channels.parse_channels
         """
-            RAW_GPS
-            COMP_GPS
+            RAW_GPS = 106
+            COMP_GPS = 107
         """
         code_action_map[MessageIDs.ATTITUDE] = self.__attitude.parse_attitude
         code_action_map[MessageIDs.ALTITUDE] = self.get_altitude
         """
-            ANALOG
-            RC_TUNING
-            PID
-            BOX
-            MISC
-            MOTOR_PINS
-            BOXNAMES
-            PIDNAMES
-            WP
-            BOXIDS
-            RC_RAW_IMU
-            SET_RAW_RC
-            SET_RAW_GPS
-            SET_PID
-            SET_BOX
-            SET_RC_TUNING
-            ACC_CALIBRATION
-            MAG_CALIBRATION
-            SET_MISC
-            RESET_CONF
-            SET_WP
-            SWITCH_RC_SERIAL
-            IS_SERIAL
-            DEBUG
-            VTX_CONFIG
-            VTX_SET_CONFIG
-            EEPROM_WRITE
-            REBOOT
+            ANALOG = 110
+            RC_TUNING = 111
+            PID = 112
+            BOX = 113
+            MISC = 114
+            MOTOR_PINS = 115
+            BOXNAMES = 116
+            PIDNAMES = 117
+            WP = 118
+            BOXIDS = 119
+            SERVO_CONF = 120
         """
 
         return code_action_map
@@ -220,7 +203,7 @@ class MultiWii(Thread):
                 code = struct.unpack('<B', self.__ser.read())[0]
                 data = self.__ser.read(data_length)
                 # TODO Add logging
-                if self.__print and code == 105:
+                if self.__print: # and code == MessageIDs.RC:
                     print("Receiving - " + str(code))
                 checksum = struct.unpack('<B', self.__ser.read())[0]
                 # TODO check Checksum
