@@ -69,7 +69,7 @@ class MultiWii(Thread):
     # Private Methods
     def __create_action_map(self):
         code_action_map = {}
-        code_action_map[MessageIDs.IDENT] = self.__ident.parse
+        code_action_map[MessageIDs.IDENT] = self.identification.parse
         """
             STATUS = 101
         """
