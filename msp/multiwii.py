@@ -64,8 +64,6 @@ class MultiWii(Thread):
             'unknown': 0
         }
 
-        self.__rx_thread.start()
-
     # Private Methods
     def __create_action_map(self):
         code_action_map = {}
