@@ -42,6 +42,7 @@ class MultiWii(Thread):
         self.__init_comms(ser_port)
 
         self.__rc_channels = Channels()
+        self.__attitude = Attitude()
 
         # Public Attributes
         self.identification = Identification()
@@ -50,7 +51,7 @@ class MultiWii(Thread):
 
         self.raw_imu = IMU()
         self.motor = Motor()
-        self.attitude = Attitude()
+
         self.altitude = Altitude()
 
         self.vtx_config = {
@@ -74,12 +75,12 @@ class MultiWii(Thread):
             SERVO
             MOTOR
         """
-        code_action_map[MessageIDs.RC] = self.get_rc
+        code_action_map[MessageIDs.RC] = self.__rc_channels.parse_channels
         """
             RAW_GPS
             COMP_GPS
         """
-        code_action_map[MessageIDs.ATTITUDE] = self.get_attitude
+        code_action_map[MessageIDs.ATTITUDE] = self.__attitude.parse_attitude
         code_action_map[MessageIDs.ALTITUDE] = self.get_altitude
         """
             ANALOG
@@ -218,8 +219,8 @@ class MultiWii(Thread):
                 code = struct.unpack('<B', self.__ser.read())[0]
                 data = self.__ser.read(data_length)
                 # TODO Add logging
-                # if self.__print:
-                #     print("Receiving - " + str(code))
+                if self.__print and code == 105:
+                    print("Receiving - " + str(code))
                 checksum = struct.unpack('<B', self.__ser.read())[0]
                 # TODO check Checksum
                 # total_data = ['$'.encode('utf-8'), 'M'.encode('utf-8'), '<'.encode('utf-8'), data_length, code] + data
@@ -280,6 +281,15 @@ class MultiWii(Thread):
     def calibrate_acc(self):
         self.__on_thread(self.__send, [MessageIDs.ACC_CALIBRATION, []])
 
+    # Getters
+    def get_rc_channels(self):
+        return self.__rc_channels.get()
+
+    def get_attitude(self):
+        return self.__attitude.get()
+
+
+    ## TODO move these to classes
     def get_ident(self, data):
         self.identification.version = data[0]
         self.identification.multi_type = data[1]
@@ -289,13 +299,6 @@ class MultiWii(Thread):
 
     def get_status(self, data):
         pass
-
-    def get_rc(self, data):
-        self.__rc_channels.roll = data[0]
-        self.__rc_channels.pitch = data[1]
-        self.__rc_channels.yaw = data[2]
-        self.__rc_channels.throttle = data[3]
-        self.__rc_channels.timestamp = data[4]
 
     def get_imu(self, data):
         self.raw_imu.ax = data[0]
@@ -311,11 +314,6 @@ class MultiWii(Thread):
         self.raw_imu.mz = data[8]
 
         self.raw_imu.timestamp = None
-
-    def get_attitude(self, data):
-        self.attitude.angx = data[0]
-        self.attitude.angy = data[1]
-        self.attitude.heading = data[2]
 
     def get_altitude(self, data):
         self.altitude.estalt = data[0]
@@ -372,6 +370,11 @@ class Channels:
         ]
         return channels
 
+    def parse_channels(self, data):
+        self.roll = data[0]
+        self.pitch = data[1]
+        self.yaw = data[2]
+        self.throttle = data[3]
 
 
 class IMU:
@@ -408,6 +411,19 @@ class Attitude:
         self.heading = 0
 
         self.timestamp = None
+
+    def get(self):
+        attitude = [
+            self.angx,
+            self.angy,
+            self.heading
+        ]
+        return attitude
+
+    def parse_attitude(self, data):
+        self.angx = data[0]
+        self.angy = data[1]
+        self.heading = data[2]
 
     def __str__(self):
         result = "Attitude: \n\t"
