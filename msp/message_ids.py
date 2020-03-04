@@ -1,5 +1,7 @@
 class MessageIDs:
     """Multiwii Serial Protocol message ID"""
+
+    # 100's are from the Flight Controller
     IDENT = 100
     STATUS = 101
     RAW_IMU = 102
@@ -22,6 +24,7 @@ class MessageIDs:
     BOXIDS = 119
     SERVO_CONF = 120
 
+    # 200's are to the Flight Controller
     SET_RAW_RC = 200
     SET_RAW_GPS = 201
     SET_PID = 202
@@ -36,7 +39,7 @@ class MessageIDs:
     SET_HEAD = 211
     SET_SERVO_CONF = 212
 
-
+    ## Unknown
     # EEPROM_WRITE = 250
     # DEBUG = 254
     #
