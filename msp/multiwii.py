@@ -292,9 +292,6 @@ class MultiWii(Thread):
         self.__on_thread(self.__send, [MessageIDs.ACC_CALIBRATION, []])
 
     # Getters
-    def get_rc_channels(self):
-        return self.__rc_channels.get()
-
     def get_imu(self):
         return self.__imu.get()
 
@@ -303,6 +300,18 @@ class MultiWii(Thread):
 
     def get_altitude(self):
         return self.__altitude.get()
+
+    def get_rc_channels(self):
+        return self.__rc_channels.get()
+
+    def get_gps(self):
+        return self.__gps.get()
+
+    def get_comp_gps(self):
+        return self.__comp_gps.get()
+
+    def get_pid(self):
+        return self.pid_coef.get()
 
 
 
