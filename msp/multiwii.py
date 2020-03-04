@@ -161,6 +161,7 @@ class MultiWii(Thread):
         self.__send(MessageIDs.RAW_IMU)
         self.__send(MessageIDs.ALTITUDE)
         self.__send(MessageIDs.ATTITUDE)
+        self.__send(MessageIDs.SET_RAW_RC, 14, self.__rc_channels.get())
 
     def __arm(self):
         self.__rc_channels.arm = self.__ARM_VALUE
