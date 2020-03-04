@@ -2,10 +2,13 @@
 
 """test-altitude.py: Test script to send RC commands to a MultiWii Board."""
 
+import sys
+
 from msp.multiwii import MultiWii
 
 if __name__ == "__main__":
-    fc = MultiWii("/dev/ttyS0")
+    print_debug = sys.argv[1].lower() == 'true'
+    fc = MultiWii("/dev/ttyS0", print_debug)
     fc.start()
     try:
         while True:

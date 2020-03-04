@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
 """test-arm-disarm.py: Test script to send RC commands to a MultiWii Board."""
+import time
+import sys
 
 from msp.multiwii import MultiWii
-import time
 
 if __name__ == "__main__":
 
     #board = MultiWii("/dev/tty.usbserial-AM016WP4")
-    fc = MultiWii("/dev/ttyS0")
+    print_debug = sys.argv[1].lower() == 'true'
+    fc = MultiWii("/dev/ttyS0", print_debug)
     fc.start()
 
     print("Arming!")

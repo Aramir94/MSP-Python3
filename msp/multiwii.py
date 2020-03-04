@@ -16,12 +16,12 @@ class MultiWii(Thread):
     __FAILSAFE_VALUE = 2050
     __ANGLE_VALUE = 2050
 
-    def __init__(self, ser_port):
+    def __init__(self, ser_port, print_debug=False):
         super(MultiWii, self).__init__(
             name="Comms_Tx"
         )
 
-        self.__print_debug = True
+        self.__print_debug = print_debug
 
         # Private Attributes
         self.__lock = Lock()

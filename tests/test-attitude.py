@@ -2,11 +2,14 @@
 
 """test-attitude.py: Test script to send RC commands to a MultiWii Board."""
 import time
+import sys
+
 from msp.multiwii import MultiWii
 
 if __name__ == "__main__":
     try:
-        fc = MultiWii("/dev/ttyS0")
+        print_debug = sys.argv[1].lower() == 'true'
+        fc = MultiWii("/dev/ttyS0", print_debug)
         fc.start()
         while True:
             print(fc.get_attitude())
