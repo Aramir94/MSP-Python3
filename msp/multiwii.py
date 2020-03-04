@@ -55,19 +55,6 @@ class MultiWii(Thread):
         self.ser = None
         self.__init_comms(ser_port)
 
-        # Time to wait until the board becomes operational
-        wakeup = 2
-        try:
-            self.ser.open()
-            if self.__print:
-                print("Waking up board on " + self.ser.port + "...")
-            for i in range(1, wakeup):
-                if self.__print:
-                    print(wakeup - i)
-                time.sleep(1)
-        except Exception as error:
-            print("\n\nError opening " + self.ser.port + " port.\n" + str(error) + "\n\n")
-
     # Private Methods
     def __create_action_map(self):
         code_action_map = {}
@@ -138,6 +125,19 @@ class MultiWii(Thread):
         self.ser.rtscts = False
         self.ser.dsrdtr = False
         # self.ser.writeTimeout = 2
+
+        # Time to wait until the board becomes operational
+        wakeup = 2
+        try:
+            self.ser.open()
+            if self.__print:
+                print("Waking up board on " + self.ser.port + "...")
+            for i in range(1, wakeup):
+                if self.__print:
+                    print(wakeup - i)
+                time.sleep(1)
+        except Exception as error:
+            print("\n\nError opening " + self.ser.port + " port.\n" + str(error) + "\n\n")
 
         if self.__print:
             print("Serial Communication Initialized")
