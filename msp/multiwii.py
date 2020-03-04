@@ -50,12 +50,7 @@ class MultiWii(Thread):
         # Public Attributes
         self.identification = Identification()
         self.pid_coef = PIDCoefficients()
-
-
-
         self.motor = Motor()
-
-
 
         self.vtx_config = {
             'device': 0,
