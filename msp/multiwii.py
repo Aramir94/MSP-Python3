@@ -21,7 +21,7 @@ class MultiWii(Thread):
             name="Comms_Tx"
         )
 
-        self.__print = True
+        self.__print_debug = True
 
         # Private Attributes
         self.__lock = Lock()
@@ -124,20 +124,21 @@ class MultiWii(Thread):
         wakeup = 2
         try:
             self.__ser.open()
-            if self.__print:
-                print("Waking up board on " + self.__ser.port + "...")
+            self.__print("Waking up board on " + self.__ser.port + "...")
             for i in range(1, wakeup):
-                if self.__print:
-                    print(wakeup - i)
+                self.__print(wakeup - i)
                 time.sleep(1)
         except Exception as error:
             print("\n\nError opening " + self.__ser.port + " port.\n" + str(error) + "\n\n")
 
-        if self.__print:
-            print("Serial Communication Initialized")
+        self.__print("Serial Communication Initialized")
 
     def __on_thread(self, function, *args, **kwargs):
         self.__q.put((function, args, kwargs))
+
+    def __print(self, data):
+        if self.__print_debug:
+            print(data)
 
     def __shutdown(self):
         print(current_thread().name + " - Shutting Down")
@@ -191,12 +192,12 @@ class MultiWii(Thread):
             traceback.print_exc()
 
     def __receive(self):
-        if self.__print:
-            print("Starting " + current_thread().name)
+        self.__print("Starting " + current_thread().name)
         while self.__running:
             try:
                 while True:
                     header = self.__ser.read().decode('utf-8')
+
                     if header == '$':
                         header = header + self.__ser.read(2).decode('utf-8')
                         break
@@ -205,8 +206,7 @@ class MultiWii(Thread):
                 code = struct.unpack('<B', self.__ser.read())[0]
                 data = self.__ser.read(data_length)
                 # TODO Add logging
-                if self.__print: # and code == MessageIDs.RC:
-                    print("Receiving - " + str(code))
+                self.__print("Receiving - " + str(code))
                 checksum = struct.unpack('<B', self.__ser.read())[0]
                 # TODO check Checksum
                 # total_data = ['$'.encode('utf-8'), 'M'.encode('utf-8'), '<'.encode('utf-8'), data_length, code] + data
