@@ -7,9 +7,15 @@ from threading import current_thread
 
 from msp.message_ids import MessageIDs
 
+__OFF_VALUE = 850
+
 
 class MultiWii(Thread):
     """Class initialization"""
+
+    __ARM_VALUE = 2050
+    __FAILSAFE_VALUE = 2050
+    __ANGLE_VALUE = 2050
 
     def __init__(self, ser_port):
         super(MultiWii, self).__init__(
@@ -36,10 +42,12 @@ class MultiWii(Thread):
         self.__ser = None
         self.__init_comms(ser_port)
 
+        self.__rc_channels = Channels()
+
         # Public Attributes
         self.identification = Identification()
         self.pid_coef = PIDCoefficients()
-        self.rc_channels = Channels()
+
 
         self.raw_imu = IMU()
         self.motor = Motor()
@@ -156,18 +164,16 @@ class MultiWii(Thread):
         self.__send(MessageIDs.ATTITUDE)
 
     def __arm(self):
-        # Roll, Pitch, Throttle, Yaw
-        data = [1500, 1500, 1000, 2000]
-        self.__send(MessageIDs.SET_RAW_RC, 8, data)
+        self.__rc_channels.arm = self.__ARM_VALUE
+        self.__send(MessageIDs.SET_RAW_RC, 14, self.__rc_channels.get())
         self.__is_armed = True
-        # TODO use a different channel to arm the drone
 
     def __disarm(self):
         # Roll, Pitch, Throttle, Yaw
-        data = [1500, 1500, 1000, 1000]
-        self.__send(MessageIDs.SET_RAW_RC, 8, data)
+        global __OFF_VALUE
+        self.__rc_channels.arm = __OFF_VALUE
+        self.__send(MessageIDs.SET_RAW_RC, 14, self.__rc_channels.get())
         self.__is_armed = False
-        # TODO use a different channel to disarm the drone
 
     def __send(self, code: MessageIDs, data_length=0, data=None):
         """
@@ -286,11 +292,11 @@ class MultiWii(Thread):
         pass
 
     def get_rc(self, data):
-        self.rc_channels.roll = data[0]
-        self.rc_channels.pitch = data[1]
-        self.rc_channels.yaw = data[2]
-        self.rc_channels.throttle = data[3]
-        self.rc_channels.timestamp = data[4]
+        self.__rc_channels.roll = data[0]
+        self.__rc_channels.pitch = data[1]
+        self.__rc_channels.yaw = data[2]
+        self.__rc_channels.throttle = data[3]
+        self.__rc_channels.timestamp = data[4]
 
     def get_imu(self, data):
         self.raw_imu.ax = data[0]
@@ -345,11 +351,29 @@ class PIDCoefficients:
 
 class Channels:
     def __init__(self):
-        self.roll = 0
-        self.pitch = 0
-        self.yaw = 0
-        self.throttle = 0
+        global __OFF_VALUE
+        self.roll = __OFF_VALUE
+        self.pitch = __OFF_VALUE
+        self.yaw = __OFF_VALUE
+        self.throttle = __OFF_VALUE
+        self.arm = __OFF_VALUE
+        self.angle = __OFF_VALUE
+        self.failsafe = __OFF_VALUE
+
         self.timestamp = 0
+
+    def get(self):
+        channels = [
+            self.roll,
+            self.pitch,
+            self.yaw,
+            self.throttle,
+            self.arm,
+            self.angle,
+            self.failsafe
+        ]
+        return channels
+
 
 
 class IMU:
