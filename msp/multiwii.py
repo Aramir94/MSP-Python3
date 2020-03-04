@@ -7,8 +7,7 @@ from threading import current_thread
 
 from msp.message_ids import MessageIDs
 
-__OFF_VALUE = 850
-
+OFF_VALUE = 850
 
 class MultiWii(Thread):
     """Class initialization"""
@@ -170,8 +169,7 @@ class MultiWii(Thread):
 
     def __disarm(self):
         # Roll, Pitch, Throttle, Yaw
-        global __OFF_VALUE
-        self.__rc_channels.arm = __OFF_VALUE
+        self.__rc_channels.arm = OFF_VALUE
         self.__send(MessageIDs.SET_RAW_RC, 14, self.__rc_channels.get())
         self.__is_armed = False
 
@@ -351,14 +349,13 @@ class PIDCoefficients:
 
 class Channels:
     def __init__(self):
-        global __OFF_VALUE
-        self.roll = __OFF_VALUE
-        self.pitch = __OFF_VALUE
-        self.yaw = __OFF_VALUE
-        self.throttle = __OFF_VALUE
-        self.arm = __OFF_VALUE
-        self.angle = __OFF_VALUE
-        self.failsafe = __OFF_VALUE
+        self.roll = OFF_VALUE
+        self.pitch = OFF_VALUE
+        self.yaw = OFF_VALUE
+        self.throttle = OFF_VALUE
+        self.arm = OFF_VALUE
+        self.angle = OFF_VALUE
+        self.failsafe = OFF_VALUE
 
         self.timestamp = 0
 
