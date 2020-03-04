@@ -9,7 +9,6 @@ if __name__ == "__main__":
 
     #board = MultiWii("/dev/tty.usbserial-AM016WP4")
     fc = MultiWii("/dev/ttyS0")
-    fc.start()
 
     print("Arming!")
     fc.arm()

@@ -7,7 +7,6 @@ from msp.multiwii import MultiWii
 if __name__ == "__main__":
     fc = MultiWii("/dev/ttyS0")
     try:
-        fc.start()
         while True:
             print(fc.get_altitude())
             
