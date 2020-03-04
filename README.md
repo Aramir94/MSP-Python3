@@ -73,11 +73,14 @@ The module is also designed to be extremely simple to use, the next code will re
 the orientation of the a MultiWii board connected to a USB port:
 
 ```
+import sys
 from msp.multiwii import MultiWii
 
 if __name__ == "__main__":
-    fc = MultiWii("/dev/ttyS0")
     try:
+        print_debug = sys.argv[1].lower() == 'true'
+        fc = MultiWii("/dev/ttyS0", print_debug)
+        fc.start()
         while True:
             print(fc.get_attitude())
 
