@@ -9,6 +9,7 @@ from msp.message_ids import MessageIDs
 
 OFF_VALUE = 850
 
+
 class MultiWii(Thread):
     """Class initialization"""
 
@@ -610,7 +611,38 @@ class PIDCoefficients:
         self.yi = 0
         self.yd = 0
 
-        self.timestamp = None
+        self.timestamp = 0
+
+    def parse(self, data):
+        self.rp = data[0]
+        self.ri = data[1]
+        self.rd = data[2]
+
+        self.pp = data[3]
+        self.pi = data[4]
+        self.pd = data[5]
+
+        self.yp = data[6]
+        self.yi = data[7]
+        self.yd = data[8]
+
+        self.timestamp = 0
+        pass
+
+    def get(self):
+        pid = [
+            self.rp,
+            self.ri,
+            self.rd,
+            self.pp,
+            self.pi,
+            self.pd,
+            self.yp,
+            self.yi,
+            self.yd
+        ]
+
+        return pid
 
 
 class Box:
