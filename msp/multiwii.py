@@ -199,11 +199,8 @@ class MultiWii(Thread):
             try:
                 while True:
                     header = self.__ser.read().decode('utf-8')
-                    self.__print(current_thread().name + " - Header?: " + str(header))
-
                     if header == '$':
                         header = header + self.__ser.read(2).decode('utf-8')
-                        self.__print(current_thread().name + " - Header: " + str(header))
                         break
 
                 data_length = struct.unpack('<B', self.__ser.read())[0]
