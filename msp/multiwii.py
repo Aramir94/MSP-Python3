@@ -45,8 +45,6 @@ class MultiWii(Thread):
         self.__altitude = Altitude()
         self.__imu = IMU()
 
-        self.__code_action_map = self.__create_action_map()
-
         # Public Attributes
         self.identification = Identification()
         self.pid_coef = PIDCoefficients()
@@ -60,6 +58,8 @@ class MultiWii(Thread):
             'pit': 0,
             'unknown': 0
         }
+
+        self.__code_action_map = self.__create_action_map()
 
     # Private Methods
     def __create_action_map(self):
