@@ -152,15 +152,19 @@ class MultiWii(Thread):
         self.__send(MessageIDs.RC)
 
     def __arm(self):
+        self.__print("Arming...")
         self.__rc_channels.arm = self.__ARM_VALUE
         self.__send(MessageIDs.SET_RAW_RC, 14, self.__rc_channels.get())
         self.__is_armed = True
+        self.__print("Armed")
 
     def __disarm(self):
+        self.__print("Disarming...")
         # Roll, Pitch, Throttle, Yaw
         self.__rc_channels.arm = OFF_VALUE
         self.__send(MessageIDs.SET_RAW_RC, 14, self.__rc_channels.get())
         self.__is_armed = False
+        self.__print("Disarmed")
 
     def __send(self, code: MessageIDs, data_length=0, data=None):
         """
@@ -253,8 +257,10 @@ class MultiWii(Thread):
                     function, args, kwargs = self.__q.get(timeout=self.__timeout)
                     function(*args, **kwargs)
                 except queue.Empty:
+                    self.__print("Idling")
                     self.__idle()
         finally:
+            self.__print("Closing Serial Port")
             self.__ser.close()
 
     def is_armed(self):
