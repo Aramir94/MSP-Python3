@@ -42,6 +42,8 @@ class MultiWii(Thread):
 
         self.__rc_channels = Channels()
         self.__attitude = Attitude()
+        self.__altitude = Altitude()
+        self.__imu = IMU()
 
         self.__code_action_map = self.__create_action_map()
 
@@ -50,10 +52,10 @@ class MultiWii(Thread):
         self.pid_coef = PIDCoefficients()
 
 
-        self.raw_imu = IMU()
+
         self.motor = Motor()
 
-        self.altitude = Altitude()
+
 
         self.vtx_config = {
             'device': 0,
@@ -67,22 +69,22 @@ class MultiWii(Thread):
     # Private Methods
     def __create_action_map(self):
         code_action_map = {}
-        code_action_map[MessageIDs.IDENT] = self.get_ident
+        code_action_map[MessageIDs.IDENT] = self.__ident.parse
         """
             STATUS = 101
         """
-        code_action_map[MessageIDs.RAW_IMU] = self.get_imu
+        code_action_map[MessageIDs.RAW_IMU] = self.__imu.parse
         """
             SERVO = 103
             MOTOR = 104
         """
-        code_action_map[MessageIDs.RC] = self.__rc_channels.parse_channels
+        code_action_map[MessageIDs.RC] = self.__rc_channels.parse
         """
             RAW_GPS = 106
             COMP_GPS = 107
         """
-        code_action_map[MessageIDs.ATTITUDE] = self.__attitude.parse_attitude
-        code_action_map[MessageIDs.ALTITUDE] = self.get_altitude
+        code_action_map[MessageIDs.ATTITUDE] = self.__attitude.parse
+        code_action_map[MessageIDs.ALTITUDE] = self.__altitude.parse
         """
             ANALOG = 110
             RC_TUNING = 111
@@ -276,39 +278,15 @@ class MultiWii(Thread):
     def get_rc_channels(self):
         return self.__rc_channels.get()
 
+    def get_imu(self):
+        return self.__imu.get()
+
     def get_attitude(self):
         return self.__attitude.get()
 
+    def get_altitude(self):
+        return self.__altitude.get()
 
-    ## TODO move these to classes
-    def get_ident(self, data):
-        self.identification.version = data[0]
-        self.identification.multi_type = data[1]
-        self.identification.msp_version = data[2]
-        self.identification.capability = data[3]
-        self.identification.timestamp = None
-
-    def get_status(self, data):
-        pass
-
-    def get_imu(self, data):
-        self.raw_imu.ax = data[0]
-        self.raw_imu.ay = data[1]
-        self.raw_imu.az = data[2]
-
-        self.raw_imu.gx = data[3]
-        self.raw_imu.gy = data[4]
-        self.raw_imu.gz = data[5]
-
-        self.raw_imu.mx = data[6]
-        self.raw_imu.my = data[7]
-        self.raw_imu.mz = data[8]
-
-        self.raw_imu.timestamp = None
-
-    def get_altitude(self, data):
-        self.altitude.estalt = data[0]
-        self.altitude.variometer = data[1]
 
 
 class Identification:
@@ -317,6 +295,15 @@ class Identification:
         self.multi_type = 0
         self.msp_version = 0
         self.capability = 0
+
+        self.timestamp = None
+
+    def parse(self, data):
+        self.version = data[0]
+        self.multi_type = data[1]
+        self.msp_version = data[2]
+        self.capability = data[3]
+
         self.timestamp = None
 
 
@@ -349,6 +336,17 @@ class Channels:
 
         self.timestamp = 0
 
+    def parse(self, data):
+        self.roll = data[0]
+        self.pitch = data[1]
+        self.yaw = data[2]
+        self.throttle = data[3]
+        self.arm = data[4]
+        self.angle = data[5]
+        self.failsafe = data[6]
+
+        self.timestamp = 0
+
     def get(self):
         channels = [
             self.roll,
@@ -360,13 +358,6 @@ class Channels:
             self.failsafe
         ]
         return channels
-
-    def parse_channels(self, data):
-        self.roll = data[0]
-        self.pitch = data[1]
-        self.yaw = data[2]
-        self.throttle = data[3]
-        print(data)
 
 
 class IMU:
@@ -384,6 +375,36 @@ class IMU:
         self.mz = 0
 
         self.timestamp = None
+
+    def parse(self, data):
+        self.ax = data[0]
+        self.ay = data[1]
+        self.az = data[2]
+
+        self.gx = data[3]
+        self.gy = data[4]
+        self.gz = data[5]
+
+        self.mx = data[6]
+        self.my = data[7]
+        self.mz = data[8]
+
+        self.timestamp = None
+
+    def get(self):
+        imu = [
+            self.ax,
+            self.ay,
+            self.az,
+            self.gx,
+            self.gy,
+            self.gz,
+            self.mx,
+            self.my,
+            self.mz
+        ]
+
+        return imu
 
 
 class Motor:
@@ -404,6 +425,11 @@ class Attitude:
 
         self.timestamp = None
 
+    def parse(self, data):
+        self.angx = data[0]
+        self.angy = data[1]
+        self.heading = data[2]
+
     def get(self):
         attitude = [
             self.angx,
@@ -411,16 +437,6 @@ class Attitude:
             self.heading
         ]
         return attitude
-
-    def parse_attitude(self, data):
-        self.angx = data[0]
-        self.angy = data[1]
-        self.heading = data[2]
-
-    def __str__(self):
-        result = "Attitude: \n\t"
-        temp_dict = {'angx': self.angx, 'angy': self.angy, 'heading': self.heading}
-        return result + str(temp_dict)
 
 
 class Altitude:
@@ -430,7 +446,14 @@ class Altitude:
 
         self.timestamp = None
 
-    def __str__(self):
-        result = "Altitude: \n\t"
-        temp_dict = {'estalt': self.estalt, 'vario': self.vario}
-        return result + str(temp_dict)
+    def parse(self, data):
+        self.estalt = data[0]
+        self.vario = data[1]
+
+    def get(self):
+        altitude = [
+            self.estalt,
+            self.vario
+        ]
+
+        return altitude
