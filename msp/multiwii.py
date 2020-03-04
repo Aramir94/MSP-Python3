@@ -33,6 +33,9 @@ class MultiWii(Thread):
         self.__print = True
         self.__code_action_map = self.__create_action_map()
 
+        self.__ser = None
+        self.__init_comms(ser_port)
+
         # Public Attributes
         self.identification = Identification()
         self.pid_coef = PIDCoefficients()
@@ -51,9 +54,6 @@ class MultiWii(Thread):
             'pit': 0,
             'unknown': 0
         }
-
-        self.ser = None
-        self.__init_comms(ser_port)
 
     # Private Methods
     def __create_action_map(self):
@@ -114,30 +114,30 @@ class MultiWii(Thread):
         :param ser_port: Example: /dev/ttyS0
         :return: None
         """
-        self.ser = serial.Serial()
-        self.ser.port = ser_port
-        self.ser.baudrate = 115200
-        self.ser.bytesize = serial.EIGHTBITS
-        self.ser.parity = serial.PARITY_NONE
-        self.ser.stopbits = serial.STOPBITS_ONE
-        self.ser.timeout = None
-        self.ser.xonxoff = False
-        self.ser.rtscts = False
-        self.ser.dsrdtr = False
-        # self.ser.writeTimeout = 2
+        self.__ser = serial.Serial()
+        self.__ser.port = ser_port
+        self.__ser.baudrate = 115200
+        self.__ser.bytesize = serial.EIGHTBITS
+        self.__ser.parity = serial.PARITY_NONE
+        self.__ser.stopbits = serial.STOPBITS_ONE
+        self.__ser.timeout = None
+        self.__ser.xonxoff = False
+        self.__ser.rtscts = False
+        self.__ser.dsrdtr = False
+        # self.__ser.writeTimeout = 2
 
         # Time to wait until the board becomes operational
         wakeup = 2
         try:
-            self.ser.open()
+            self.__ser.open()
             if self.__print:
-                print("Waking up board on " + self.ser.port + "...")
+                print("Waking up board on " + self.__ser.port + "...")
             for i in range(1, wakeup):
                 if self.__print:
                     print(wakeup - i)
                 time.sleep(1)
         except Exception as error:
-            print("\n\nError opening " + self.ser.port + " port.\n" + str(error) + "\n\n")
+            print("\n\nError opening " + self.__ser.port + " port.\n" + str(error) + "\n\n")
 
         if self.__print:
             print("Serial Communication Initialized")
@@ -190,8 +190,8 @@ class MultiWii(Thread):
         total_data.append(checksum)
 
         try:
-            b = self.ser.write(struct.pack('<3c2B%dHB' % len(data), *total_data))
-            # self.ser.flushOutput()
+            b = self.__ser.write(struct.pack('<3c2B%dHB' % len(data), *total_data))
+            # self.__ser.flushOutput()
         except Exception as error:
             import traceback
             print("\n\nError in send.")
@@ -204,18 +204,18 @@ class MultiWii(Thread):
         while self.__running:
             try:
                 while True:
-                    header = self.ser.read().decode('utf-8')
+                    header = self.__ser.read().decode('utf-8')
                     if header == '$':
-                        header = header + self.ser.read(2).decode('utf-8')
+                        header = header + self.__ser.read(2).decode('utf-8')
                         break
 
-                data_length = struct.unpack('<B', self.ser.read())[0]
-                code = struct.unpack('<B', self.ser.read())[0]
-                data = self.ser.read(data_length)
+                data_length = struct.unpack('<B', self.__ser.read())[0]
+                code = struct.unpack('<B', self.__ser.read())[0]
+                data = self.__ser.read(data_length)
                 # TODO Add logging
                 # if self.__print:
                 #     print("Receiving - " + str(code))
-                checksum = struct.unpack('<B', self.ser.read())[0]
+                checksum = struct.unpack('<B', self.__ser.read())[0]
                 # TODO check Checksum
                 # total_data = ['$'.encode('utf-8'), 'M'.encode('utf-8'), '<'.encode('utf-8'), data_length, code] + data
                 # structure = struct.pack('<2B%dH' % len(data), *total_data[3:len(total_data)])
@@ -231,7 +231,7 @@ class MultiWii(Thread):
                 # print("data: " + str(data))
                 # print("checksum: " + str(checksum))
 
-                self.ser.flushInput()
+                self.__ser.flushInput()
 
             except Exception as error:
                 import traceback
