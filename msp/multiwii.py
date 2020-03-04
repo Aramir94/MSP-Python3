@@ -151,25 +151,25 @@ class MultiWii(Thread):
 
     def __idle(self):
         # TODO create looping control logic
-        self.__send(0, MessageIDs.RAW_IMU)
-        self.__send(0, MessageIDs.ALTITUDE)
-        self.__send(0, MessageIDs.ATTITUDE)
+        self.__send(MessageIDs.RAW_IMU)
+        self.__send(MessageIDs.ALTITUDE)
+        self.__send(MessageIDs.ATTITUDE)
 
     def __arm(self):
         # Roll, Pitch, Throttle, Yaw
         data = [1500, 1500, 1000, 2000]
-        self.__send(8, MessageIDs.SET_RAW_RC, data)
+        self.__send(MessageIDs.SET_RAW_RC, 8, data)
         self.__is_armed = True
         # TODO use a different channel to arm the drone
 
     def __disarm(self):
         # Roll, Pitch, Throttle, Yaw
         data = [1500, 1500, 1000, 1000]
-        self.__send(8, MessageIDs.SET_RAW_RC, data)
+        self.__send(MessageIDs.SET_RAW_RC, 8, data)
         self.__is_armed = False
         # TODO use a different channel to disarm the drone
 
-    def __send(self, data_length, code: MessageIDs, data=None):
+    def __send(self, code: MessageIDs, data_length=0, data=None):
         """
         Crafts and sends the command packet to be sent over the serial interface to the Flight Controller.
 
@@ -273,7 +273,7 @@ class MultiWii(Thread):
         self.__on_thread(self.__disarm)
 
     def calibrate_acc(self):
-        self.__on_thread(self.__send, [0, MessageIDs.ACC_CALIBRATION, []])
+        self.__on_thread(self.__send, [MessageIDs.ACC_CALIBRATION, []])
 
     def get_ident(self, data):
         self.identification.version = data[0]
