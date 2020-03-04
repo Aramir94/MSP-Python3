@@ -44,11 +44,16 @@ class MultiWii(Thread):
         self.__attitude = Attitude()
         self.__altitude = Altitude()
         self.__imu = IMU()
+        self.__gps = GPS()
+        self.__comp_gps = CompGPS()
 
         # Public Attributes
         self.identification = Identification()
-        self.pid_coef = PIDCoefficients()
+        self.status = Status()
+        self.servo = Servo()
         self.motor = Motor()
+        self.pid_coef = PIDCoefficients()
+
 
         self.vtx_config = {
             'device': 0,
@@ -65,34 +70,26 @@ class MultiWii(Thread):
     def __create_action_map(self):
         code_action_map = {}
         code_action_map[MessageIDs.IDENT] = self.identification.parse
-        """
-            STATUS = 101
-        """
+        code_action_map[MessageIDs.STATUS] = self.status.parse
         code_action_map[MessageIDs.RAW_IMU] = self.__imu.parse
-        """
-            SERVO = 103
-            MOTOR = 104
-        """
+        code_action_map[MessageIDs.SERVO] = None
+        code_action_map[MessageIDs.MOTOR] = None
         code_action_map[MessageIDs.RC] = self.__rc_channels.parse
-        """
-            RAW_GPS = 106
-            COMP_GPS = 107
-        """
+        code_action_map[MessageIDs.RAW_GPS] = self.__gps.parse
+        code_action_map[MessageIDs.COMP_GPS] = self.__comp_gps.parse
         code_action_map[MessageIDs.ATTITUDE] = self.__attitude.parse
         code_action_map[MessageIDs.ALTITUDE] = self.__altitude.parse
-        """
-            ANALOG = 110
-            RC_TUNING = 111
-            PID = 112
-            BOX = 113
-            MISC = 114
-            MOTOR_PINS = 115
-            BOXNAMES = 116
-            PIDNAMES = 117
-            WP = 118
-            BOXIDS = 119
-            SERVO_CONF = 120
-        """
+        code_action_map[MessageIDs.ANALOG] = None
+        code_action_map[MessageIDs.RC_TUNING] = None
+        code_action_map[MessageIDs.PID] = None
+        code_action_map[MessageIDs.BOX] = None
+        code_action_map[MessageIDs.MISC] = None
+        code_action_map[MessageIDs.MOTOR_PINS] = None
+        code_action_map[MessageIDs.BOXNAMES] = None
+        code_action_map[MessageIDs.PIDNAMES] = None
+        code_action_map[MessageIDs.WP] = None
+        code_action_map[MessageIDs.BOXIDS] = None
+        code_action_map[MessageIDs.SERVO_CONF] = None
 
         return code_action_map
 
@@ -140,16 +137,34 @@ class MultiWii(Thread):
         self.__running = False
 
     def __idle(self):
-        # TODO create looping control logic
+        # Request Data
         self.__send(MessageIDs.RAW_IMU)
         self.__send(MessageIDs.ALTITUDE)
         self.__send(MessageIDs.ATTITUDE)
         self.__send(MessageIDs.RC)
+        self.__send(MessageIDs.RAW_GPS)
+        self.__send(MessageIDs.COMP_GPS)
+        self.__send(MessageIDs.PID)
+
+        # Set RC values
+        data = self.__rc_channels.get()
+        self.__send(
+            MessageIDs.SET_RAW_RC,
+            len(data)*2,
+            data
+        )
 
     def __arm(self):
         self.__print("Arming...")
         self.__rc_channels.arm = self.__ARM_VALUE
-        self.__send(MessageIDs.SET_RAW_RC, 14, self.__rc_channels.get())
+
+        data = self.__rc_channels.get()
+        self.__send(
+            MessageIDs.SET_RAW_RC,
+            len(data)*2,
+            data
+        )
+
         self.__is_armed = True
         self.__print("Armed")
 
@@ -157,7 +172,14 @@ class MultiWii(Thread):
         self.__print("Disarming...")
         # Roll, Pitch, Throttle, Yaw
         self.__rc_channels.arm = OFF_VALUE
-        self.__send(MessageIDs.SET_RAW_RC, 14, self.__rc_channels.get())
+
+        data = self.__rc_channels.get()
+        self.__send(
+            MessageIDs.SET_RAW_RC,
+            len(data)*2,
+            data
+        )
+
         self.__is_armed = False
         self.__print("Disarmed")
 
@@ -301,58 +323,44 @@ class Identification:
 
         self.timestamp = None
 
+    def get(self):
+        identification = [
+            self.version,
+            self.multi_type,
+            self.msp_version,
+            self.capability
+        ]
 
-class PIDCoefficients:
+        return identification
+
+
+class Status:
     def __init__(self):
-        self.rp = 0
-        self.ri = 0
-        self.rd = 0
-
-        self.pp = 0
-        self.pi = 0
-        self.pd = 0
-
-        self.yp = 0
-        self.yi = 0
-        self.yd = 0
-
-        self.timestamp = None
-
-
-class Channels:
-    def __init__(self):
-        self.roll = OFF_VALUE
-        self.pitch = OFF_VALUE
-        self.yaw = OFF_VALUE
-        self.throttle = OFF_VALUE
-        self.arm = OFF_VALUE
-        self.angle = OFF_VALUE
-        self.failsafe = OFF_VALUE
+        self.cycleTime = 0
+        self.i2c_errors_count = 0
+        self.sensor = 0
+        self.flag = 0
+        self.global_conf = 0
 
         self.timestamp = 0
 
     def parse(self, data):
-        self.roll = data[0]
-        self.pitch = data[1]
-        self.yaw = data[2]
-        self.throttle = data[3]
-        self.arm = data[4]
-        self.angle = data[5]
-        self.failsafe = data[6]
+        self.cycleTime = data[0]
+        self.i2c_errors_count = data[1]
+        self.sensor = data[2]
+        self.flag = data[3]
+        self.global_conf = data[4]
 
         self.timestamp = 0
 
     def get(self):
-        channels = [
-            self.roll,
-            self.pitch,
-            self.yaw,
-            self.throttle,
-            self.arm,
-            self.angle,
-            self.failsafe
+        status = [
+            self.cycleTime,
+            self.i2c_errors_count,
+            self.sensor,
+            self.flag,
+            self.global_conf
         ]
-        return channels
 
 
 class IMU:
@@ -402,6 +410,11 @@ class IMU:
         return imu
 
 
+class Servo:
+    # TODO
+    pass
+
+
 class Motor:
     def __init__(self):
         self.m1 = 0
@@ -410,6 +423,118 @@ class Motor:
         self.m4 = 0
 
         self.timestamp = None
+
+    def parse(self, data):
+        self.m1 = data[0]
+        self.m2 = data[1]
+        self.m3 = data[2]
+        self.m4 = data[3]
+
+        self.timestamp = 0
+
+    def get(self):
+        motor = [
+            self.m1,
+            self.m2,
+            self.m3,
+            self.m4
+        ]
+
+        return motor
+
+
+class Channels:
+    def __init__(self):
+        self.roll = OFF_VALUE
+        self.pitch = OFF_VALUE
+        self.yaw = OFF_VALUE
+        self.throttle = OFF_VALUE
+        self.arm = OFF_VALUE
+        self.angle = OFF_VALUE
+        self.failsafe = OFF_VALUE
+
+        self.timestamp = 0
+
+    def parse(self, data):
+        self.roll = data[0]
+        self.pitch = data[1]
+        self.yaw = data[2]
+        self.throttle = data[3]
+        self.arm = data[4]
+        self.angle = data[5]
+        self.failsafe = data[6]
+
+        self.timestamp = 0
+
+    def get(self):
+        channels = [
+            self.roll,
+            self.pitch,
+            self.yaw,
+            self.throttle,
+            self.arm,
+            self.angle,
+            self.failsafe
+        ]
+        return channels
+
+
+class GPS:
+    def __init__(self):
+        self.fix = False
+        self.numSat = 0
+        self.lat = 0
+        self.lon = 0
+        self.altitude = 0       # meter
+        self.speed = 0          # cm/s
+        self.ground_course = 0  # degree*10
+
+        self.timestamp = 0
+
+    def parse(self, data):
+        self.fix = data[0]
+        self.numSat = data[1]
+        self.lat = data[2]
+        self.lon = data[3]
+        self.altitude = data[4]
+        self.speed = data[5]
+        self.ground_course = data[6]
+
+        self.timestamp = 0
+
+    def get(self):
+        gps = [
+            self.fix,
+            self.numSat,
+            self.lat,
+            self.lon,
+            self.altitude,
+            self.speed,
+            self.ground_course
+        ]
+
+        return gps
+
+class CompGPS:
+    def __init__(self):
+        self.distance_to_home = 0   # meters
+        self.direction_to_home = 0  # degree (-180,180)
+        self.update = False         # boolean
+
+        self.timestamp = None
+
+    def parse(self, data):
+        self.distance_to_home = data[0]
+        self.direction_to_home = data[1]
+        self.update = data[2]
+
+    def get(self):
+        comp_gps = [
+            self.distance_to_home,
+            self.direction_to_home,
+            self.update
+        ]
+        return comp_gps
 
 
 class Attitude:
@@ -452,3 +577,60 @@ class Altitude:
         ]
 
         return altitude
+
+
+class Analog:
+    pass
+
+
+class RCTuning:
+    pass
+
+
+class PIDCoefficients:
+    def __init__(self):
+        self.rp = 0
+        self.ri = 0
+        self.rd = 0
+
+        self.pp = 0
+        self.pi = 0
+        self.pd = 0
+
+        self.yp = 0
+        self.yi = 0
+        self.yd = 0
+
+        self.timestamp = None
+
+
+class Box:
+    pass
+
+
+class Misc:
+    pass
+
+
+class MotorPins:
+    pass
+
+
+class BoxNames:
+    pass
+
+
+class PIDNames:
+    pass
+
+
+class WP:
+    pass
+
+
+class BoxIDs:
+    pass
+
+
+class Servo_Conf:
+    pass
