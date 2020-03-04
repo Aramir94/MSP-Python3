@@ -21,6 +21,8 @@ class MultiWii(Thread):
             name="Comms_Tx"
         )
 
+        self.__print = True
+
         # Private Attributes
         self.__lock = Lock()
         self.__running = True
@@ -35,14 +37,13 @@ class MultiWii(Thread):
             daemon=True
         )
 
-        self.__print = True
-        self.__code_action_map = self.__create_action_map()
-
         self.__ser = None
         self.__init_comms(ser_port)
 
         self.__rc_channels = Channels()
         self.__attitude = Attitude()
+
+        self.__code_action_map = self.__create_action_map()
 
         # Public Attributes
         self.identification = Identification()
