@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """test-attitude.py: Test script to send RC commands to a MultiWii Board."""
-
+import time
 from msp.multiwii import MultiWii
 
 if __name__ == "__main__":
@@ -10,6 +10,8 @@ if __name__ == "__main__":
         fc.start()
         while True:
             print(fc.get_attitude())
+            time.sleep(.5)
+
 
     except Exception as error:
         import traceback

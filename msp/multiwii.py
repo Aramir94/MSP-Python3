@@ -366,6 +366,7 @@ class Channels:
         self.pitch = data[1]
         self.yaw = data[2]
         self.throttle = data[3]
+        print(data)
 
 
 class IMU:
