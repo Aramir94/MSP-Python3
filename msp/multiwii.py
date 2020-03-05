@@ -40,8 +40,7 @@ class MultiWii(Thread):
 
         self.__ser = None
         self.__init_comms(ser_port)
-
-        self.__rc_channels = Channels()
+        self.__rc_actual = Channels()
         self.__attitude = Attitude()
         self.__altitude = Altitude()
         self.__imu = IMU()
@@ -50,6 +49,7 @@ class MultiWii(Thread):
 
         # Public Attributes
         self.identification = Identification()
+        self.rc_target = Channels()
         self.status = Status()
         self.servo = Servo()
         self.motor = Motor()
@@ -75,7 +75,7 @@ class MultiWii(Thread):
         code_action_map[MessageIDs.RAW_IMU] = self.__imu.parse
         code_action_map[MessageIDs.SERVO] = None
         code_action_map[MessageIDs.MOTOR] = None
-        code_action_map[MessageIDs.RC] = self.__rc_channels.parse
+        code_action_map[MessageIDs.RC] = self.__rc_actual.parse
         code_action_map[MessageIDs.RAW_GPS] = self.__gps.parse
         code_action_map[MessageIDs.COMP_GPS] = self.__comp_gps.parse
         code_action_map[MessageIDs.ATTITUDE] = self.__attitude.parse
@@ -148,7 +148,7 @@ class MultiWii(Thread):
         self.__send(MessageIDs.PID)
 
         # Set RC values
-        data = self.__rc_channels.get()
+        data = self.rc_target.get()
         self.__send(
             MessageIDs.SET_RAW_RC,
             len(data)*2,
@@ -157,9 +157,9 @@ class MultiWii(Thread):
 
     def __arm(self):
         self.__print("Arming...")
-        self.__rc_channels.arm = self.__ARM_VALUE
+        self.__rc_actual.arm = self.__ARM_VALUE
 
-        data = self.__rc_channels.get()
+        data = self.__rc_actual.get()
         self.__send(
             MessageIDs.SET_RAW_RC,
             len(data)*2,
@@ -172,9 +172,9 @@ class MultiWii(Thread):
     def __disarm(self):
         self.__print("Disarming...")
         # Roll, Pitch, Throttle, Yaw
-        self.__rc_channels.arm = OFF_VALUE
+        self.__rc_actual.arm = OFF_VALUE
 
-        data = self.__rc_channels.get()
+        data = self.__rc_actual.get()
         self.__send(
             MessageIDs.SET_RAW_RC,
             len(data)*2,
@@ -303,7 +303,7 @@ class MultiWii(Thread):
         return self.__altitude.get()
 
     def get_rc_channels(self):
-        return self.__rc_channels.get()
+        return self.__rc_actual.get()
 
     def get_gps(self):
         return self.__gps.get()
@@ -581,6 +581,10 @@ class Altitude:
         self.vario = data[1]
 
     def get(self):
+        """
+
+        :return: [Estimated_altitude:cm,
+        """
         altitude = [
             self.estalt,
             self.vario
