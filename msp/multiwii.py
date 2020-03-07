@@ -292,6 +292,10 @@ class MultiWii(Thread):
     def calibrate_acc(self):
         self.__on_thread(self.__send, [MessageIDs.ACC_CALIBRATION, []])
 
+    # Setters
+    def set_target_channels(self, channel):
+        self.rc_target = Channels.limit(channel)
+
     # Getters
     def get_imu(self):
         return self.__imu.get()
@@ -454,6 +458,10 @@ class Motor:
 
 
 class Channels:
+    MAX_VALUE = 2100
+    MIN_VALUE = 950
+    MID_VALUE = 1500
+
     def __init__(self):
         self.roll = OFF_VALUE
         self.pitch = OFF_VALUE
@@ -487,6 +495,29 @@ class Channels:
             self.failsafe
         ]
         return channels
+
+    def limit(self, channel):
+        if  Channels.MIN_VALUE > channel.roll:
+            channel.roll = Channels.MIN_VALUE
+        elif channel.roll > Channels.Max_VALUE:
+            channel.roll = Channels.Max_VALUE
+
+        if  Channels.MIN_VALUE > channel.pitch:
+            channel.pitch = Channels.MIN_VALUE
+        elif channel.pitch > Channels.Max_VALUE:
+            channel.pitch = Channels.Max_VALUE
+
+        if  Channels.MIN_VALUE > channel.yaw:
+            channel.yaw = Channels.MIN_VALUE
+        elif channel.yaw > Channels.Max_VALUE:
+            channel.yaw = Channels.Max_VALUE
+
+        if  Channels.MIN_VALUE > channel.throttle:
+            channel.throttle = Channels.MIN_VALUE
+        elif channel.throttle > Channels.Max_VALUE:
+            channel.throttle = Channels.Max_VALUE
+
+        return channel
 
 
 class GPS:
