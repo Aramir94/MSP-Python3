@@ -2,6 +2,8 @@ import serial
 import struct
 import time
 import queue
+import logging
+
 from threading import Thread, Lock
 from threading import current_thread
 
@@ -267,6 +269,7 @@ class MultiWii(Thread):
         self.__on_thread(self.__shutdown)
 
     def run(self):
+
         try:
             self.__rx_thread.start()
             while self.__running:
@@ -274,8 +277,9 @@ class MultiWii(Thread):
                     function, args, kwargs = self.__q.get(timeout=self.__timeout)
                     function(*args, **kwargs)
                 except queue.Empty:
-                    self.__print("Idling")
+                    logging.getLogger("MSP_TX").info("Idling...")
                     self.__idle()
+
         finally:
             self.__print("Closing Serial Port")
             self.__ser.close()
@@ -463,10 +467,10 @@ class Channels:
     MID_VALUE = 1500
 
     def __init__(self):
-        self.roll = OFF_VALUE
-        self.pitch = OFF_VALUE
-        self.yaw = OFF_VALUE
-        self.throttle = OFF_VALUE
+        self.roll = self.MID_VALUE
+        self.pitch = self.MID_VALUE
+        self.yaw = self.MID_VALUE
+        self.throttle = self.MID_VALUE
         self.arm = OFF_VALUE
         self.angle = OFF_VALUE
         self.failsafe = OFF_VALUE
@@ -520,12 +524,19 @@ class Channels:
         return channel
 
     def __add__(self, other):
-        self.roll += other.roll
-        self.pitch += other.pitch
-        self.yaw += other.yaw
-        self.throttle += other.throttle
 
-        return self
+        if isinstance(other, list):
+            self.roll += other[0]
+            self.pitch += other[1]
+            self.yaw += other[2]
+            self.throttle += other[3]
+        elif isinstance(other, Channels):
+            self.roll += other.roll
+            self.pitch += other.pitch
+            self.yaw += other.yaw
+            self.throttle += other.throttle
+        else:
+            raise Exception(str(type(other)) + " \nIs incompatiable with this type.")
 
 class GPS:
     def __init__(self):
