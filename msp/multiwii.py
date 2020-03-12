@@ -499,26 +499,33 @@ class Channels:
     def limit(self, channel):
         if  Channels.MIN_VALUE > channel.roll:
             channel.roll = Channels.MIN_VALUE
-        elif channel.roll > Channels.Max_VALUE:
-            channel.roll = Channels.Max_VALUE
+        elif channel.roll > Channels.MAX_VALUE:
+            channel.roll = Channels.MAX_VALUE
 
         if  Channels.MIN_VALUE > channel.pitch:
             channel.pitch = Channels.MIN_VALUE
-        elif channel.pitch > Channels.Max_VALUE:
-            channel.pitch = Channels.Max_VALUE
+        elif channel.pitch > Channels.MAX_VALUE:
+            channel.pitch = Channels.MAX_VALUE
 
         if  Channels.MIN_VALUE > channel.yaw:
             channel.yaw = Channels.MIN_VALUE
-        elif channel.yaw > Channels.Max_VALUE:
-            channel.yaw = Channels.Max_VALUE
+        elif channel.yaw > Channels.MAX_VALUE:
+            channel.yaw = Channels.MAX_VALUE
 
         if  Channels.MIN_VALUE > channel.throttle:
             channel.throttle = Channels.MIN_VALUE
-        elif channel.throttle > Channels.Max_VALUE:
-            channel.throttle = Channels.Max_VALUE
+        elif channel.throttle > Channels.MAX_VALUE:
+            channel.throttle = Channels.MAX_VALUE
 
         return channel
 
+    def __add__(self, other):
+        self.roll += other.roll
+        self.pitch += other.pitch
+        self.yaw += other.yaw
+        self.throttle += other.throttle
+
+        return self
 
 class GPS:
     def __init__(self):
