@@ -286,7 +286,6 @@ class MultiWii(Thread):
                     function, args, kwargs = self.__q.get(timeout=self.__timeout)
                     function(*args, **kwargs)
                 except queue.Empty:
-                    logging.getLogger("MSP_TX").info("Idling...")
                     self.__idle()
 
         finally:
