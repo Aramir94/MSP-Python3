@@ -6,7 +6,7 @@ def read(fname):
 
 setup(
     name="msp-python3",
-    version="0.2.2",
+    version="0.2.3",
 
     author="Luke A. Rohl",
     author_email="Luke.A.Rohl@gmail.com",
