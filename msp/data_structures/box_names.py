@@ -1,0 +1,3 @@
+
+class BoxName:
+    pass

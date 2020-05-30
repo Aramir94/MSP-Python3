@@ -1,0 +1,2 @@
+class BoxID:
+    pass

@@ -8,14 +8,25 @@ from threading import Thread, Lock
 from threading import current_thread
 
 from msp.message_ids import MessageIDs
+from msp.data_structures.channels import Channel
+from msp.data_structures.identification import Identification
+from msp.data_structures.status import Status
+from msp.data_structures.motors import Motor
+from msp.data_structures.gps import GPS
+from msp.data_structures.comp_gps import CompGPS
+from msp.data_structures.imus import IMU
+from msp.data_structures.attitude import Attitude
+from msp.data_structures.altitude import Altitude
+from msp.data_structures.servos import Servo
+from msp.data_structures.pid_coefficients import PIDCoefficients
 
-OFF_VALUE = 850
+
+
 
 
 class MultiWii(Thread):
     """Class initialization"""
 
-    __ARM_VALUE = 2050
     __FAILSAFE_VALUE = 2050
     __ANGLE_VALUE = 2050
 
@@ -42,7 +53,7 @@ class MultiWii(Thread):
 
         self.__ser = None
         self.__init_comms(ser_port)
-        self.__rc_actual = Channels()
+        self.__rc_actual = Channel()
         self.__attitude = Attitude()
         self.__altitude = Altitude()
         self.__imu = IMU()
@@ -51,7 +62,6 @@ class MultiWii(Thread):
 
         # Public Attributes
         self.identification = Identification()
-        self.rc_target = Channels()
         self.status = Status()
         self.servo = Servo()
         self.motor = Motor()
@@ -71,28 +81,27 @@ class MultiWii(Thread):
 
     # Private Methods
     def __create_action_map(self):
-        code_action_map = {}
-        code_action_map[MessageIDs.IDENT] = self.identification.parse
-        code_action_map[MessageIDs.STATUS] = self.status.parse
-        code_action_map[MessageIDs.RAW_IMU] = self.__imu.parse
-        code_action_map[MessageIDs.SERVO] = None
-        code_action_map[MessageIDs.MOTOR] = None
-        code_action_map[MessageIDs.RC] = self.__rc_actual.parse
-        code_action_map[MessageIDs.RAW_GPS] = self.__gps.parse
-        code_action_map[MessageIDs.COMP_GPS] = self.__comp_gps.parse
-        code_action_map[MessageIDs.ATTITUDE] = self.__attitude.parse
-        code_action_map[MessageIDs.ALTITUDE] = self.__altitude.parse
-        code_action_map[MessageIDs.ANALOG] = None
-        code_action_map[MessageIDs.RC_TUNING] = None
-        code_action_map[MessageIDs.PID] = None
-        code_action_map[MessageIDs.BOX] = None
-        code_action_map[MessageIDs.MISC] = None
-        code_action_map[MessageIDs.MOTOR_PINS] = None
-        code_action_map[MessageIDs.BOXNAMES] = None
-        code_action_map[MessageIDs.PIDNAMES] = None
-        code_action_map[MessageIDs.WP] = None
-        code_action_map[MessageIDs.BOXIDS] = None
-        code_action_map[MessageIDs.SERVO_CONF] = None
+        code_action_map = {MessageIDs.IDENT: self.identification.parse,
+                           MessageIDs.STATUS: self.status.parse,
+                           MessageIDs.RAW_IMU: self.__imu.parse,
+                           MessageIDs.SERVO: None,
+                           MessageIDs.MOTOR: None,
+                           MessageIDs.RC: self.__rc_actual.parse,
+                           MessageIDs.RAW_GPS: self.__gps.parse,
+                           MessageIDs.COMP_GPS: self.__comp_gps.parse,
+                           MessageIDs.ATTITUDE: self.__attitude.parse,
+                           MessageIDs.ALTITUDE: self.__altitude.parse,
+                           MessageIDs.ANALOG: None,
+                           MessageIDs.RC_TUNING: None,
+                           MessageIDs.PID: None,
+                           MessageIDs.BOX: None,
+                           MessageIDs.MISC: None,
+                           MessageIDs.MOTOR_PINS: None,
+                           MessageIDs.BOXNAMES: None,
+                           MessageIDs.PIDNAMES: None,
+                           MessageIDs.WP: None,
+                           MessageIDs.BOXIDS: None,
+                           MessageIDs.SERVO_CONF: None}
 
         return code_action_map
 
@@ -150,7 +159,7 @@ class MultiWii(Thread):
         self.__send(MessageIDs.PID)
 
         # Set RC values
-        data = self.rc_target.get()
+        data = self.rc_target.to_array()
         self.__send(
             MessageIDs.SET_RAW_RC,
             len(data)*2,
@@ -159,9 +168,9 @@ class MultiWii(Thread):
 
     def __arm(self):
         self.__print("Arming...")
-        self.__rc_actual.arm = self.__ARM_VALUE
+        self.__rc_actual.armed(True)
 
-        data = self.__rc_actual.get()
+        data = self.__rc_actual.to_array()
         self.__send(
             MessageIDs.SET_RAW_RC,
             len(data)*2,
@@ -174,9 +183,9 @@ class MultiWii(Thread):
     def __disarm(self):
         self.__print("Disarming...")
         # Roll, Pitch, Throttle, Yaw
-        self.__rc_actual.arm = OFF_VALUE
+        self.__rc_actual.armed(False)
 
-        data = self.__rc_actual.get()
+        data = self.__rc_actual.to_array()
         self.__send(
             MessageIDs.SET_RAW_RC,
             len(data)*2,
@@ -298,7 +307,7 @@ class MultiWii(Thread):
 
     # Setters
     def set_target_channels(self, channel):
-        self.rc_target = Channels.limit(channel)
+        self.rc_target = Channel.limit(channel)
 
     # Getters
     def get_imu(self):
@@ -324,407 +333,13 @@ class MultiWii(Thread):
 
 
 
-class Identification:
-    def __init__(self):
-        self.version = 0
-        self.multi_type = 0
-        self.msp_version = 0
-        self.capability = 0
 
-        self.timestamp = None
 
-    def parse(self, data):
-        self.version = data[0]
-        self.multi_type = data[1]
-        self.msp_version = data[2]
-        self.capability = data[3]
 
-        self.timestamp = None
 
-    def get(self):
-        identification = [
-            self.version,
-            self.multi_type,
-            self.msp_version,
-            self.capability
-        ]
 
-        return identification
 
 
-class Status:
-    def __init__(self):
-        self.cycleTime = 0
-        self.i2c_errors_count = 0
-        self.sensor = 0
-        self.flag = 0
-        self.global_conf = 0
 
-        self.timestamp = 0
 
-    def parse(self, data):
-        self.cycleTime = data[0]
-        self.i2c_errors_count = data[1]
-        self.sensor = data[2]
-        self.flag = data[3]
-        self.global_conf = data[4]
 
-        self.timestamp = 0
-
-    def get(self):
-        status = [
-            self.cycleTime,
-            self.i2c_errors_count,
-            self.sensor,
-            self.flag,
-            self.global_conf
-        ]
-
-
-class IMU:
-    def __init__(self):
-        self.ax = 0
-        self.ay = 0
-        self.az = 0
-
-        self.gx = 0
-        self.gy = 0
-        self.gz = 0
-
-        self.mx = 0
-        self.my = 0
-        self.mz = 0
-
-        self.timestamp = None
-
-    def parse(self, data):
-        self.ax = data[0]
-        self.ay = data[1]
-        self.az = data[2]
-
-        self.gx = data[3]
-        self.gy = data[4]
-        self.gz = data[5]
-
-        self.mx = data[6]
-        self.my = data[7]
-        self.mz = data[8]
-
-        self.timestamp = None
-
-    def get(self):
-        imu = [
-            self.ax,
-            self.ay,
-            self.az,
-            self.gx,
-            self.gy,
-            self.gz,
-            self.mx,
-            self.my,
-            self.mz
-        ]
-
-        return imu
-
-
-class Servo:
-    # TODO
-    pass
-
-
-class Motor:
-    def __init__(self):
-        self.m1 = 0
-        self.m2 = 0
-        self.m3 = 0
-        self.m4 = 0
-
-        self.timestamp = None
-
-    def parse(self, data):
-        self.m1 = data[0]
-        self.m2 = data[1]
-        self.m3 = data[2]
-        self.m4 = data[3]
-
-        self.timestamp = 0
-
-    def get(self):
-        motor = [
-            self.m1,
-            self.m2,
-            self.m3,
-            self.m4
-        ]
-
-        return motor
-
-
-class Channels:
-    MAX_VALUE = 2100
-    MIN_VALUE = 950
-    MID_VALUE = 1500
-
-    def __init__(self):
-        self.roll = self.MID_VALUE
-        self.pitch = self.MID_VALUE
-        self.yaw = self.MID_VALUE
-        self.throttle = self.MID_VALUE
-        self.arm = OFF_VALUE
-        self.angle = OFF_VALUE
-        self.failsafe = OFF_VALUE
-
-        self.timestamp = 0
-
-    def parse(self, data):
-        self.roll = data[0]
-        self.pitch = data[1]
-        self.yaw = data[2]
-        self.throttle = data[3]
-        self.arm = data[4]
-        self.angle = data[5]
-        self.failsafe = data[6]
-
-        self.timestamp = 0
-
-    def get(self):
-        channels = [
-            self.roll,
-            self.pitch,
-            self.yaw,
-            self.throttle,
-            self.arm,
-            self.angle,
-            self.failsafe
-        ]
-        return channels
-
-    def limit(self, channel):
-        if  Channels.MIN_VALUE > channel.roll:
-            channel.roll = Channels.MIN_VALUE
-        elif channel.roll > Channels.MAX_VALUE:
-            channel.roll = Channels.MAX_VALUE
-
-        if  Channels.MIN_VALUE > channel.pitch:
-            channel.pitch = Channels.MIN_VALUE
-        elif channel.pitch > Channels.MAX_VALUE:
-            channel.pitch = Channels.MAX_VALUE
-
-        if  Channels.MIN_VALUE > channel.yaw:
-            channel.yaw = Channels.MIN_VALUE
-        elif channel.yaw > Channels.MAX_VALUE:
-            channel.yaw = Channels.MAX_VALUE
-
-        if  Channels.MIN_VALUE > channel.throttle:
-            channel.throttle = Channels.MIN_VALUE
-        elif channel.throttle > Channels.MAX_VALUE:
-            channel.throttle = Channels.MAX_VALUE
-
-        return channel
-
-    def __add__(self, other):
-
-        if isinstance(other, list):
-            self.roll += other[0]
-            self.pitch += other[1]
-            self.yaw += other[2]
-            self.throttle += other[3]
-        elif isinstance(other, Channels):
-            self.roll += other.roll
-            self.pitch += other.pitch
-            self.yaw += other.yaw
-            self.throttle += other.throttle
-        else:
-            raise Exception(str(type(other)) + " \nIs incompatiable with this type.")
-
-class GPS:
-    def __init__(self):
-        self.fix = False
-        self.numSat = 0
-        self.lat = 0
-        self.lon = 0
-        self.altitude = 0       # meter
-        self.speed = 0          # cm/s
-        self.ground_course = 0  # degree*10
-
-        self.timestamp = 0
-
-    def parse(self, data):
-        self.fix = data[0]
-        self.numSat = data[1]
-        self.lat = data[2]
-        self.lon = data[3]
-        self.altitude = data[4]
-        self.speed = data[5]
-        self.ground_course = data[6]
-
-        self.timestamp = 0
-
-    def get(self):
-        gps = [
-            self.fix,
-            self.numSat,
-            self.lat,
-            self.lon,
-            self.altitude,
-            self.speed,
-            self.ground_course
-        ]
-
-        return gps
-
-class CompGPS:
-    def __init__(self):
-        self.distance_to_home = 0   # meters
-        self.direction_to_home = 0  # degree (-180,180)
-        self.update = False         # boolean
-
-        self.timestamp = None
-
-    def parse(self, data):
-        self.distance_to_home = data[0]
-        self.direction_to_home = data[1]
-        self.update = data[2]
-
-    def get(self):
-        comp_gps = [
-            self.distance_to_home,
-            self.direction_to_home,
-            self.update
-        ]
-        return comp_gps
-
-
-class Attitude:
-    def __init__(self):
-        self.angx = 0
-        self.angy = 0
-        self.heading = 0
-
-        self.timestamp = None
-
-    def parse(self, data):
-        self.angx = data[0]
-        self.angy = data[1]
-        self.heading = data[2]
-
-    def get(self):
-        attitude = [
-            self.angx,
-            self.angy,
-            self.heading
-        ]
-        return attitude
-
-
-class Altitude:
-    def __init__(self):
-        self.estalt = 0
-        self.vario = 0
-
-        self.timestamp = None
-
-    def parse(self, data):
-        self.estalt = data[0]
-        self.vario = data[1]
-
-    def get(self):
-        """
-
-        :return: [Estimated_altitude:cm,
-        """
-        altitude = [
-            self.estalt,
-            self.vario
-        ]
-
-        return altitude
-
-
-class Analog:
-    pass
-
-
-class RCTuning:
-    pass
-
-
-class PIDCoefficients:
-    def __init__(self):
-        self.rp = 0
-        self.ri = 0
-        self.rd = 0
-
-        self.pp = 0
-        self.pi = 0
-        self.pd = 0
-
-        self.yp = 0
-        self.yi = 0
-        self.yd = 0
-
-        self.timestamp = 0
-
-    def parse(self, data):
-        self.rp = data[0]
-        self.ri = data[1]
-        self.rd = data[2]
-
-        self.pp = data[3]
-        self.pi = data[4]
-        self.pd = data[5]
-
-        self.yp = data[6]
-        self.yi = data[7]
-        self.yd = data[8]
-
-        self.timestamp = 0
-        pass
-
-    def get(self):
-        pid = [
-            self.rp,
-            self.ri,
-            self.rd,
-            self.pp,
-            self.pi,
-            self.pd,
-            self.yp,
-            self.yi,
-            self.yd
-        ]
-
-        return pid
-
-
-class Box:
-    pass
-
-
-class Misc:
-    pass
-
-
-class MotorPins:
-    pass
-
-
-class BoxNames:
-    pass
-
-
-class PIDNames:
-    pass
-
-
-class WP:
-    pass
-
-
-class BoxIDs:
-    pass
-
-
-class Servo_Conf:
-    pass
