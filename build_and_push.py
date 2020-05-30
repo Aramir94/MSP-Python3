@@ -4,7 +4,7 @@ import os
 import sys
 
 print('Creating .tar.gz and .whl')
-exit_status = os.system('python3 setup.py sdist bdist_wheel')
+exit_status = os.system('python setup.py sdist bdist_wheel')
 
 if not exit_status == 0:
     import traceback
@@ -14,4 +14,4 @@ if not exit_status == 0:
 print()
 
 print('Uploading')
-os.system('python3 -m twine upload --skip-existing dist/*')
+os.system('python -m twine upload --skip-existing dist/*')
