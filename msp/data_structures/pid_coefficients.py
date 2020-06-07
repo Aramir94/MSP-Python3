@@ -1,4 +1,7 @@
-class PIDCoefficients:
+from msp.data_structures.data_structure import DataStructure
+
+
+class PIDCoefficients(DataStructure):
     def __init__(self):
         self.rp = 0
         self.ri = 0
@@ -14,23 +17,25 @@ class PIDCoefficients:
 
         self.timestamp = 0
 
-    def parse(self, data):
-        self.rp = data[0]
-        self.ri = data[1]
-        self.rd = data[2]
+    @staticmethod
+    def parse(data):
+        pid_coefficients = PIDCoefficients()
 
-        self.pp = data[3]
-        self.pi = data[4]
-        self.pd = data[5]
+        pid_coefficients.rp = data[0]
+        pid_coefficients.ri = data[1]
+        pid_coefficients.rd = data[2]
 
-        self.yp = data[6]
-        self.yi = data[7]
-        self.yd = data[8]
+        pid_coefficients.pp = data[3]
+        pid_coefficients.pi = data[4]
+        pid_coefficients.pd = data[5]
 
-        self.timestamp = 0
-        pass
+        pid_coefficients.yp = data[6]
+        pid_coefficients.yi = data[7]
+        pid_coefficients.yd = data[8]
 
-    def get(self):
+        return pid_coefficients
+
+    def to_array(self):
         pid = [
             self.rp,
             self.ri,

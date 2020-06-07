@@ -1,7 +1,8 @@
 from __future__ import annotations
+from msp.data_structures.data_structure import DataStructure
 
 
-class Channel:
+class Channel(DataStructure):
     MAX_VALUE = 2100
     MIN_VALUE = 950
     MID_VALUE = 1500
@@ -17,14 +18,19 @@ class Channel:
         self.angle = self.MIN_VALUE
         self.failsafe = self.MIN_VALUE
 
-    def parse(self, data):
-        self.roll = data[0]
-        self.pitch = data[1]
-        self.yaw = data[2]
-        self.throttle = data[3]
-        self.arm = data[4]
-        self.angle = data[5]
-        self.failsafe = data[6]
+    @staticmethod
+    def parse(data):
+        channel = Channel()
+
+        channel.roll = data[0]
+        channel.pitch = data[1]
+        channel.yaw = data[2]
+        channel.throttle = data[3]
+        channel.arm = data[4]
+        channel.angle = data[5]
+        channel.failsafe = data[6]
+
+        return channel
 
     def __add__(self, other: Channel) -> Channel:
         if self.arm != other.arm:

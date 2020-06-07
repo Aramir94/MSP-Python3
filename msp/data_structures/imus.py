@@ -1,5 +1,7 @@
+from msp.data_structures.data_structure import DataStructure
 
-class IMU:
+
+class IMU(DataStructure):
     def __init__(self):
         self.ax = 0
         self.ay = 0
@@ -15,22 +17,25 @@ class IMU:
 
         self.timestamp = None
 
-    def parse(self, data):
-        self.ax = data[0]
-        self.ay = data[1]
-        self.az = data[2]
+    @staticmethod
+    def parse(data):
+        imu = IMU()
 
-        self.gx = data[3]
-        self.gy = data[4]
-        self.gz = data[5]
+        imu.ax = data[0]
+        imu.ay = data[1]
+        imu.az = data[2]
 
-        self.mx = data[6]
-        self.my = data[7]
-        self.mz = data[8]
+        imu.gx = data[3]
+        imu.gy = data[4]
+        imu.gz = data[5]
 
-        self.timestamp = None
+        imu.mx = data[6]
+        imu.my = data[7]
+        imumz = data[8]
 
-    def get(self):
+        return imu
+
+    def to_array(self):
         imu = [
             self.ax,
             self.ay,

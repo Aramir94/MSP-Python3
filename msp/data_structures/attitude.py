@@ -1,5 +1,7 @@
+from msp.data_structures.data_structure import DataStructure
 
-class Attitude:
+
+class Attitude(DataStructure):
     def __init__(self):
         self.angx = 0
         self.angy = 0
@@ -7,12 +9,17 @@ class Attitude:
 
         self.timestamp = None
 
-    def parse(self, data):
-        self.angx = data[0]
-        self.angy = data[1]
-        self.heading = data[2]
+    @staticmethod
+    def parse(data):
+        attitude = Attitude()
 
-    def get(self):
+        attitude.angx = data[0]
+        attitude.angy = data[1]
+        attitude.heading = data[2]
+
+        return attitude
+
+    def to_array(self):
         attitude = [
             self.angx,
             self.angy,

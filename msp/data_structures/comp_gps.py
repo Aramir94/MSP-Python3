@@ -1,5 +1,7 @@
+from msp.data_structures.data_structure import DataStructure
 
-class CompGPS:
+
+class CompGPS(DataStructure):
     def __init__(self):
         self.distance_to_home = 0   # meters
         self.direction_to_home = 0  # degree (-180,180)
@@ -7,12 +9,17 @@ class CompGPS:
 
         self.timestamp = None
 
-    def parse(self, data):
-        self.distance_to_home = data[0]
-        self.direction_to_home = data[1]
-        self.update = data[2]
+    @staticmethod
+    def parse(data):
+        comp_gps = CompGPS()
 
-    def get(self):
+        comp_gps.distance_to_home = data[0]
+        comp_gps.direction_to_home = data[1]
+        comp_gps.update = data[2]
+
+        return comp_gps
+
+    def to_array(self):
         comp_gps = [
             self.distance_to_home,
             self.direction_to_home,

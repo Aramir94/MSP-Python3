@@ -1,5 +1,7 @@
+from msp.data_structures.data_structure import DataStructure
 
-class GPS:
+
+class GPS(DataStructure):
     def __init__(self):
         self.fix = False
         self.numSat = 0
@@ -11,18 +13,21 @@ class GPS:
 
         self.timestamp = 0
 
-    def parse(self, data):
-        self.fix = data[0]
-        self.numSat = data[1]
-        self.lat = data[2]
-        self.lon = data[3]
-        self.altitude = data[4]
-        self.speed = data[5]
-        self.ground_course = data[6]
+    @staticmethod
+    def parse(data):
+        gps = GPS()
 
-        self.timestamp = 0
+        gps.fix = data[0]
+        gps.numSat = data[1]
+        gps.lat = data[2]
+        gps.lon = data[3]
+        gps.altitude = data[4]
+        gps.speed = data[5]
+        gps.ground_course = data[6]
 
-    def get(self):
+        return gps
+
+    def to_array(self):
         gps = [
             self.fix,
             self.numSat,

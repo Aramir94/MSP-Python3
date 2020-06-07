@@ -1,5 +1,7 @@
+from msp.data_structures.data_structure import DataStructure
 
-class Motor:
+
+class Motor(DataStructure):
     def __init__(self):
         self.m1 = 0
         self.m2 = 0
@@ -8,15 +10,17 @@ class Motor:
 
         self.timestamp = None
 
-    def parse(self, data):
-        self.m1 = data[0]
-        self.m2 = data[1]
-        self.m3 = data[2]
-        self.m4 = data[3]
+    @staticmethod
+    def parse(data):
+        motor = Motor()
+        motor.m1 = data[0]
+        motor.m2 = data[1]
+        motor.m3 = data[2]
+        motor.m4 = data[3]
 
-        self.timestamp = 0
+        return motor
 
-    def get(self):
+    def to_array(self):
         motor = [
             self.m1,
             self.m2,
