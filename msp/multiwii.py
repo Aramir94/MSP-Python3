@@ -216,6 +216,12 @@ class MultiWii(Thread):
         self.__send(MessageIDs.RAW_GPS)
         self.__send(MessageIDs.COMP_GPS)
         self.__send(MessageIDs.PID)
+        self.__send(MessageIDs.MOTOR)
+        self.__send(MessageIDs.ANALOG)
+        self.__send(MessageIDs.RC_TUNING)
+        self.__send(MessageIDs.MISC)
+        self.__send(MessageIDs.WP)
+
 
         # Set RC values
         data = self.rc_target.to_array()
