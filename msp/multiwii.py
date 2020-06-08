@@ -8,11 +8,12 @@ from typing import List, Callable, Dict
 from threading import Thread, Lock
 from threading import current_thread
 
+from msp.message_ids import MessageIDs
+
 from msp.data_structures.analog import Analog
 from msp.data_structures.misc import Misc
 from msp.data_structures.rc_tuning import RCTuning
 from msp.data_structures.wp import WP
-from msp.message_ids import MessageIDs
 from msp.data_structures.channels import Channel
 from msp.data_structures.identification import Identification
 from msp.data_structures.status import Status
