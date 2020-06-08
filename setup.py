@@ -1,12 +1,14 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
+
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
 setup(
     name="msp-python3",
-    version="0.2.6",
+    version="0.2.7",
 
     author="Luke A. Rohl",
     author_email="Luke.A.Rohl@gmail.com",
@@ -24,6 +26,6 @@ setup(
         "Development Status :: 2 - Pre-Alpha",
     ],
 
-    packages=['msp'],
+    packages=find_packages(include=['msp', 'msp.*']),
     install_requires='pyserial'
 )
