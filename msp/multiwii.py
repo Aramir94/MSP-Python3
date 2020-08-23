@@ -27,9 +27,6 @@ from msp.data_structures.servos import Servo
 from msp.data_structures.pid_coefficients import PIDCoefficients
 
 
-
-
-
 class MultiWii(Thread):
     """
     MultiWii Protocol Class (MSP) used for interfacing with MSP flight controller boards
@@ -406,7 +403,7 @@ class MultiWii(Thread):
         self.__on_thread(self.__send, [MessageIDs.ACC_CALIBRATION, []])
 
     # Setters
-    def set_target_channels(self, channel):
+    def set_target_channels(self, channel: Channel):
         self.rc_target = channel
 
     # Getters
