@@ -19,6 +19,10 @@ class Channel(DataStructure):
         self.failsafe = MIN_VALUE
 
     @staticmethod
+    def check_value(value: float) -> bool:
+        return MIN_VALUE < value < MAX_VALUE
+
+    @staticmethod
     def parse(data):
         channel = Channel()
 
@@ -32,28 +36,73 @@ class Channel(DataStructure):
 
         return channel
 
-    def __add__(self, other: Channel) -> Channel:
-        if self.arm != other.arm:
-            raise ArmedMissMatchError
-        elif self.angle != other.angle:
-            raise AngleMissMatchError
-        elif self.failsafe != other.failsafe:
-            raise FailsafeMissMatchError
+    # def __add__(self, other: Channel) -> Channel:
+    #     if self.arm != other.arm:
+    #         raise ArmedMissMatchError
+    #     elif self.angle != other.angle:
+    #         raise AngleMissMatchError
+    #     elif self.failsafe != other.failsafe:
+    #         raise FailsafeMissMatchError
+    #
+    #     new = Channel()
+    #     new.roll = self.roll + other.roll
+    #     new.pitch = self.pitch + other.pitch
+    #     new.yaw = self.yaw + other.yaw
+    #     new.throttle = self.throttle + other.throttle
+    #
+    #     return new
 
-        new = Channel()
-        new.roll = self.roll + other.roll
-        new.pitch = self.pitch + other.pitch
-        new.yaw = self.yaw + other.yaw
-        new.throttle = self.throttle + other.throttle
+    @property
+    def roll(self):
+        return self.roll
 
-        return new
+    @roll.setter
+    def roll(self, value):
+        if self.check_value(value):
+            self.roll = value
 
-    def armed(self, armed: bool):
+    @property
+    def pitch(self):
+        return self.pitch
 
-        if armed:
-            self.arm = self.ARM_VALUE
-        else:
-            self.arm = self.OFF_VALUE
+    @pitch.setter
+    def pitch(self, value):
+        if self.check_value(value):
+            self.pitch = value
+
+    @property
+    def yaw(self):
+        return self.yaw
+
+    @yaw.setter
+    def yaw(self, value):
+        if self.check_value(value):
+            self.yaw = value
+
+    @property
+    def throttle(self):
+        return self.throttle
+
+    @throttle.setter
+    def throttle(self, value):
+        if self.check_value(value):
+            self.throttle = value
+
+    def arm(self):
+        """Sets the channel to an armed value"""
+        self.arm = ARM_VALUE
+
+    def disarm(self):
+        """Sets the channel to a disarmed value"""
+        self.arm = MIN_VALUE
+
+    def is_armed(self) -> bool:
+        """
+        True if armed, False otherwise
+
+        :return: Whether the channel is armed or not
+        """
+        return self.arm == ARM_VALUE
 
     def to_array(self):
         return [
