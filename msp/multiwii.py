@@ -56,7 +56,7 @@ class MultiWii(Thread):
         self.__running = True
 
         #: bool: Determines whether the protocol is armed or not
-        self.__is_armed = False
+        self.is_armed = None
 
         #: Thread safe queue used for receiving feedback from the flight controller
         self.__q = queue.Queue()
@@ -73,8 +73,9 @@ class MultiWii(Thread):
         #: The 2-way serial port used to communicate with the flight controller
         self.__ser = None
         self.__init_comms(ser_port)
+
         self.__rc_actual = Channel()
-        self.rc_target = Channel()
+        self.__rc_target = Channel()
         self.__attitude = Attitude()
         self.__altitude = Altitude()
         self.__imu = IMU()
@@ -106,6 +107,16 @@ class MultiWii(Thread):
         self.__code_action_map = self.__create_action_map()
 
     # Private Methods
+    @property
+    def is_armed(self):
+        """Checks to see what the last report from hardware says the value was"""
+        return self.__rc_actual.is_armed()
+
+    @is_armed.setter
+    def is_armed(self, value):
+        """Dummy setter"""
+        pass
+
     def __create_action_map(self) -> Dict:
         """
         Creates an action map between the `MessageIDs <msp.message_ids.html>`_
@@ -220,53 +231,13 @@ class MultiWii(Thread):
         self.__send(MessageIDs.MISC)
         self.__send(MessageIDs.WP)
 
-
-        # Set RC values
-        data = self.rc_target.to_array()
+        # Send RC values
+        data = self.__rc_target.to_array()
         self.__send(
             MessageIDs.SET_RAW_RC,
             len(data)*2,
             data
         )
-
-    def __arm(self) -> None:
-        """
-        Sets the protocol to indicate that it's in an armed state
-
-        :return: None
-        """
-        self.__print("Arming...")
-        self.__rc_actual.armed(True)
-
-        data = self.__rc_actual.to_array()
-        self.__send(
-            MessageIDs.SET_RAW_RC,
-            len(data)*2,
-            data
-        )
-
-        self.__is_armed = True
-        self.__print("Armed")
-
-    def __disarm(self) -> None:
-        """
-        Sets the protocol to indicate that it's in an disarmed state
-
-        :return: None
-        """
-        self.__print("Disarming...")
-        # Roll, Pitch, Throttle, Yaw
-        self.__rc_actual.armed(False)
-
-        data = self.__rc_actual.to_array()
-        self.__send(
-            MessageIDs.SET_RAW_RC,
-            len(data)*2,
-            data
-        )
-
-        self.__is_armed = False
-        self.__print("Disarmed")
 
     def __send(self, code: MessageIDs, data_length=0, data=None) -> None:
         """
@@ -375,57 +346,56 @@ class MultiWii(Thread):
             self.__print("Closing Serial Port")
             self.__ser.close()
 
-    def is_armed(self) -> bool:
-        """
-        Returns whether the protocol is armed or not
-
-        :return: Whether the protocol has been armed or not.
-        """
-        return self.__is_armed
-
-    def arm(self) -> None:
-        """
-        Arms the protocol
-
-        :return: None
-        """
-        self.__on_thread(self.__arm)
-
-    def disarm(self) -> None:
-        """
-        Disarms the protocol
-
-        :return: None
-        """
-        self.__on_thread(self.__disarm)
-
     def calibrate_acc(self):
         self.__on_thread(self.__send, [MessageIDs.ACC_CALIBRATION, []])
 
     # Setters
-    def set_target_channels(self, channel: Channel):
-        self.rc_target = channel
+    def set_roll(self, value: float):
+        """Gets the current roll value"""
+        self.__rc_target.roll = value
+
+    def set_pitch(self, value: float):
+        """Gets the current pitch value"""
+        self.__rc_target.pitch = value
+
+    def set_yaw(self, value: float):
+        """Gets the current yaw value"""
+        self.__rc_target.yaw = value
+
+    def set_throttle(self, value: float):
+        """Gets the current throttle value"""
+        self.__rc_target.throttle = value
+
+    def arm(self):
+        """Arms the protocol"""
+        self.__print("Arming...")
+        self.__rc_target.arm()
+
+    def disarm(self):
+        """Disarms the protocol"""
+        self.__print("Disarming...")
+        self.__rc_target.disarm()
 
     # Getters
     def get_imu(self):
-        return self.__imu.to_array()
+        return self.__imu
 
     def get_attitude(self):
-        return self.__attitude.to_array()
+        return self.__attitude
 
     def get_altitude(self):
-        return self.__altitude.to_array()
+        return self.__altitude
 
     def get_rc_channels(self):
-        return self.__rc_actual.to_array()
+        return self.__rc_actual
 
     def get_gps(self):
-        return self.__gps.to_array()
+        return self.__gps
 
     def get_comp_gps(self):
-        return self.__comp_gps.to_array()
+        return self.__comp_gps
 
     def get_pid(self):
-        return self.pid_coef.to_array()
+        return self.pid_coef
 
 
