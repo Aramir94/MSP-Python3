@@ -27,5 +27,6 @@ setup(
     ],
 
     packages=find_packages(include=['msp', 'msp.*']),
-    install_requires='pyserial'
+    install_requires='pyserial',
+    python_requires='>=3.5'
 )
