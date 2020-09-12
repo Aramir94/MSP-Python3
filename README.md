@@ -89,6 +89,7 @@ if __name__ == "__main__":
         print("Error on Main: " + str(error))
         traceback.print_exc()
 ```
+![RaspberryPi Pin Layout](./images/raspberry-pi-pin-layout.jpg)
 
 ## Boards update
 
