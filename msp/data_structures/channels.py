@@ -8,6 +8,7 @@ ARM_VALUE = 2050
 OFF_VALUE = 850
 
 
+
 class Channel(DataStructure):
     def __init__(self):
         self.roll = MID_VALUE
@@ -17,6 +18,19 @@ class Channel(DataStructure):
         self.arm = MIN_VALUE
         self.angle = MIN_VALUE
         self.failsafe = MIN_VALUE
+
+    @staticmethod
+    def degree_to_value(degree):
+        conversion_offset = 1500
+        diff = degree - 180
+        result = conversion_offset + (diff * 2.77)
+
+        return result
+
+    @staticmethod
+    def percent_to_value(percent):
+        conversion_offset = 1000
+        return percent/100 * conversion_offset + conversion_offset
 
     @staticmethod
     def check_value(value: float) -> bool:
