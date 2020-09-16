@@ -295,10 +295,10 @@ class MultiWii(Thread):
                 #     checksum = checksum ^ i
                 # total_data.append(checksum)
 
-                # print("code: " + str(code))
-                # print("data_length: " + str(data_length))
-                # print("data: " + str(data))
-                # print("checksum: " + str(checksum))
+                print("code: " + str(code))
+                print("data_length: " + str(data_length))
+                print("data: " + str(data))
+                print("checksum: " + str(checksum))
 
                 self.__ser.flushInput()
 
@@ -367,12 +367,12 @@ class MultiWii(Thread):
     def arm(self):
         """Arms the protocol"""
         self.__print("Arming...")
-        self.__rc_target.arm()
+        self.__rc_target.arm = ARM_VALUE
 
     def disarm(self):
         """Disarms the protocol"""
         self.__print("Disarming...")
-        self.__rc_target.disarm()
+        self.__rc_target.arm = Channel.MIN_VALUE
 
     def set_mma_values(self, values: List[int]):
         self.set_roll(values[0])
