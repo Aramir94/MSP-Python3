@@ -215,7 +215,6 @@ class MultiWii(Thread):
 
         :return: None
         """
-        self.__print("Idling...")
         # Request Data
         self.__send(MessageIDs.RAW_IMU)
         self.__send(MessageIDs.ALTITUDE)
@@ -230,7 +229,6 @@ class MultiWii(Thread):
         # self.__send(MessageIDs.MISC)
         # self.__send(MessageIDs.WP)
 
-        self.__print("Sending reference points")
         # Send RC values
         data = self.__rc_target.to_array()
         self.__send(
