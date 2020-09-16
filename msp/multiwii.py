@@ -14,7 +14,7 @@ from msp.data_structures.analog import Analog
 from msp.data_structures.misc import Misc
 from msp.data_structures.rc_tuning import RCTuning
 from msp.data_structures.wp import WP
-from msp.data_structures.channels import Channel
+from msp.data_structures.channels import Channel, ARM_VALUE
 from msp.data_structures.identification import Identification
 from msp.data_structures.status import Status
 from msp.data_structures.motors import Motor
@@ -108,7 +108,7 @@ class MultiWii(Thread):
 
     # Private Methods
     @property
-    def is_armed(self):
+    def is_armed(self) -> bool:
         """Checks to see what the last report from hardware says the value was"""
         return self.__rc_actual.is_armed()
 
@@ -376,26 +376,22 @@ class MultiWii(Thread):
         self.__print("Disarming...")
         self.__rc_target.disarm()
 
-    # Getters
-    def get_imu(self):
-        return self.__imu
+    def set_mma_values(self, values: List[int]):
+        self.set_roll(values[0])
+        self.set_pitch(values[1])
+        self.set_yaw(values[2])
+        self.set_throttle(values[3])
+        if len(values) > 4:
+            if values[4] == ARM_VALUE:
+                self.arm()
+            else:
+                self.disarm()
 
-    def get_attitude(self):
-        return self.__attitude
+    def get_pos(self) -> List[float]:
+        return [self.__gps.lat, self.__gps.lon]
 
-    def get_altitude(self):
-        return self.__altitude
+    def get_heading(self) -> int:
+        return self.__attitude.heading
 
-    def get_rc_channels(self):
-        return self.__rc_actual
-
-    def get_gps(self):
-        return self.__gps
-
-    def get_comp_gps(self):
-        return self.__comp_gps
-
-    def get_pid(self):
-        return self.pid_coef
-
-
+    def get_altitude(self) -> float:
+        return self.__gps.altitude
