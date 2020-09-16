@@ -42,9 +42,7 @@ class MultiWii(Thread):
         :param ser_port: /dev/ttyS0
         :param print_debug: Whether to print the debugging values
         """
-        super(Thread, self).__init__(
-            name="Comms_Tx"
-        )
+        super().__init__(name="Comms_Tx")
 
         #: Used for toggling debug output
         self.__print_debug = print_debug
