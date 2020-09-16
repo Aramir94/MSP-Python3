@@ -1,4 +1,3 @@
-from __future__ import annotations
 from msp.data_structures.data_structure import DataStructure
 
 MAX_VALUE = 2100
