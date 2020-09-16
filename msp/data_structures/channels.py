@@ -31,9 +31,6 @@ class Channel(DataStructure):
         conversion_offset = 1000
         return percent/100 * conversion_offset + conversion_offset
 
-    @staticmethod
-    def check_value(value: float) -> bool:
-        return MIN_VALUE < value < MAX_VALUE
 
     @staticmethod
     def parse(data):
@@ -48,58 +45,6 @@ class Channel(DataStructure):
         channel.failsafe = data[6]
 
         return channel
-
-    # def __add__(self, other: Channel) -> Channel:
-    #     if self.arm != other.arm:
-    #         raise ArmedMissMatchError
-    #     elif self.angle != other.angle:
-    #         raise AngleMissMatchError
-    #     elif self.failsafe != other.failsafe:
-    #         raise FailsafeMissMatchError
-    #
-    #     new = Channel()
-    #     new.roll = self.roll + other.roll
-    #     new.pitch = self.pitch + other.pitch
-    #     new.yaw = self.yaw + other.yaw
-    #     new.throttle = self.throttle + other.throttle
-    #
-    #     return new
-
-    @property
-    def roll(self):
-        return self.roll
-
-    @roll.setter
-    def roll(self, value):
-        if self.check_value(value):
-            self.roll = value
-
-    @property
-    def pitch(self):
-        return self.pitch
-
-    @pitch.setter
-    def pitch(self, value):
-        if self.check_value(value):
-            self.pitch = value
-
-    @property
-    def yaw(self):
-        return self.yaw
-
-    @yaw.setter
-    def yaw(self, value):
-        if self.check_value(value):
-            self.yaw = value
-
-    @property
-    def throttle(self):
-        return self.throttle
-
-    @throttle.setter
-    def throttle(self, value):
-        if self.check_value(value):
-            self.throttle = value
 
     def arm(self):
         """Sets the channel to an armed value"""
