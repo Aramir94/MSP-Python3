@@ -246,6 +246,7 @@ class MultiWii(Thread):
         :param data: The data (if required) to be transmitted. Can be left blank if the data_length = 0.
         :return: None
         """
+        print("Sending: {0}".format(code))
         if data is None:
             data = []
 
@@ -296,9 +297,9 @@ class MultiWii(Thread):
                 # total_data.append(checksum)
 
                 print("code: " + str(code))
-                print("data_length: " + str(data_length))
-                print("data: " + str(data))
-                print("checksum: " + str(checksum))
+                # print("data_length: " + str(data_length))
+                # print("data: " + str(data))
+                # print("checksum: " + str(checksum))
 
                 self.__ser.flushInput()
 
