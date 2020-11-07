@@ -39,9 +39,9 @@ class PIDCoefficients(DataStructure):
 
         return pid_coefficients
 
-    def serialize(self, setter=False) -> bytes:
+    def serialize(self, data=None) -> bytes:
         # Check if Setting or Getting
-        if not setter:
+        if not data:
             # If getting use super's serialize
             return super().serialize()
 

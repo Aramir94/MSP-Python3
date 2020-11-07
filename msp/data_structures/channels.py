@@ -24,27 +24,29 @@ class Channel(DataStructure):
     @staticmethod
     def parse(data):
         channel = Channel()
-
-        channel.roll = unpack('<H', bytes(data[:2]))[0]
-        channel.pitch = unpack('<H', bytes(data[2:4]))[0]
-        channel.yaw = unpack('<H', bytes(data[4:6]))[0]
-        channel.throttle = unpack('<H', bytes(data[6:8]))[0]
-        channel.arm = unpack('<H', bytes(data[8:10]))[0]
-        channel.angle = unpack('<H', bytes(data[10:12]))[0]
-        # Channel 7 not used
-        # Channel 8 not used
+        if len(data) != 0:
+            channel.roll = unpack('<H', bytes(data[:2]))[0]
+            channel.pitch = unpack('<H', bytes(data[2:4]))[0]
+            channel.yaw = unpack('<H', bytes(data[4:6]))[0]
+            channel.throttle = unpack('<H', bytes(data[6:8]))[0]
+            channel.arm = unpack('<H', bytes(data[8:10]))[0]
+            channel.angle = unpack('<H', bytes(data[10:12]))[0]
+            # Channel 7 not used
+            # Channel 8 not used
 
         return channel
 
-    def serialize(self, setter=False):
+    def serialize(self, data=None):
         # Check if Setting or Getting
-        if not setter:
+        if not data:
             # If getting use super's serialize
             return super().serialize()
 
         # Serialize Data
         result = int(16).to_bytes(1, 'little')
         result += int(MessageIDs.SET_RAW_RC).to_bytes(1, 'little')
+        for i in data:
+            result += int(i).to_bytes(2, 'little')
 
         # Serialize Checksum
         result = DataStructure.get_header() + result + DataStructure.perform_checksum(result)

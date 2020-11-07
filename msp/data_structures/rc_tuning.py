@@ -19,19 +19,20 @@ class RCTuning(DataStructure):
     def parse(data) -> DataStructure:
         rc_tuning = RCTuning()
 
-        rc_tuning.rc_rate = unpack('<B', bytes([data[0]]))[0]
-        rc_tuning.rc_expo = unpack('<B', bytes([data[1]]))[0]
-        rc_tuning.roll_pitch_rate = unpack('<B', bytes([data[2]]))[0]
-        rc_tuning.yaw_rate = unpack('<B', bytes([data[3]]))[0]
-        rc_tuning.dyn_thr_pid = unpack('<B', bytes([data[4]]))[0]
-        rc_tuning.throttle_mid = unpack('<B', bytes([data[5]]))[0]
-        rc_tuning.throttle_expo = unpack('<B', bytes([data[6]]))[0]
+        if len(data) != 0:
+            rc_tuning.rc_rate = unpack('<B', bytes([data[0]]))[0]
+            rc_tuning.rc_expo = unpack('<B', bytes([data[1]]))[0]
+            rc_tuning.roll_pitch_rate = unpack('<B', bytes([data[2]]))[0]
+            rc_tuning.yaw_rate = unpack('<B', bytes([data[3]]))[0]
+            rc_tuning.dyn_thr_pid = unpack('<B', bytes([data[4]]))[0]
+            rc_tuning.throttle_mid = unpack('<B', bytes([data[5]]))[0]
+            rc_tuning.throttle_expo = unpack('<B', bytes([data[6]]))[0]
 
         return rc_tuning
 
-    def serialize(self, setter=False) -> bytes:
+    def serialize(self, data=None) -> bytes:
         # Check if Setting or Getting
-        if not setter:
+        if not data:
             # If getting use super's serialize
             return super().serialize()
 

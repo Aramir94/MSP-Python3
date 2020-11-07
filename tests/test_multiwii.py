@@ -1,7 +1,6 @@
 from unittest import TestCase
 
 from msp.multiwii import MultiWii
-from msp.multiwii import MSP_Message
 from msp.message_ids import MessageIDs
 
 
@@ -16,38 +15,51 @@ class TestMultiWii(TestCase):
         self.msp.close()
         del self.msp
 
+    # Getters
     def test_get_ident(self):
-        msg = MSP_Message(MessageIDs.IDENT)
-        response = self.msp.command(msg)
+        response = self.msp.get_attribute(MessageIDs.IDENT)
         print(response)
 
     def test_get_status(self):
-        msg = MSP_Message(MessageIDs.STATUS)
-        response = self.msp.command(msg)
+        response = self.msp.get_attribute(MessageIDs.STATUS)
         print(response)
 
     def test_get_raw_imu(self):
-        msg = MSP_Message(MessageIDs.RAW_IMU)
-        response = self.msp.command(msg)
+        response = self.msp.get_attribute(MessageIDs.RAW_IMU)
+        print(response)
+
+    def test_get_attitude(self):
+        response = self.msp.get_attribute(MessageIDs.ATTITUDE)
+        print(response)
+
+    def test_get_altitude(self):
+        response = self.msp.get_attribute(MessageIDs.ALTITUDE)
         print(response)
 
     def test_get_rc(self):
-        msg = MSP_Message(MessageIDs.RC)
-        response = self.msp.command(msg)
+        response = self.msp.get_attribute(MessageIDs.RC)
         print(response)
 
+    def test_get_gps(self):
+        response = self.msp.get_attribute(MessageIDs.RAW_GPS)
+        print(response)
+
+    # Setters
     def test_set_rc(self):
-        values = [1550, 1600, 1650, 1700, 1750, 1800, 1850, 1950]
-        msg = MSP_Message(MessageIDs.SET_RAW_RC, values)
-        response = self.msp.command(msg)
+        values = [
+            1500,
+            1550,
+            1600,
+            1650,
+            1700,
+            1750,
+            1800,
+            1850
+        ]
+        response = self.msp.set_attribute(MessageIDs.SET_RAW_RC, values)
         print(response)
 
-    def test_attitude(self):
-        msg = MSP_Message(MessageIDs.ATTITUDE)
-        response = self.msp.command(msg)
-        print(response)
-
-    def test_altitude(self):
-        msg = MSP_Message(MessageIDs.ALTITUDE)
-        response = self.msp.command(msg)
+    def test_set_gps(self):
+        values = [0, 0, 0, 0, 0, 0]
+        response = self.msp.set_attribute(MessageIDs.SET_RAW_GPS, values)
         print(response)

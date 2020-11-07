@@ -36,7 +36,7 @@ class DataStructure(ABC):
             checksum = checksum ^ i
         return checksum.to_bytes(1, 'little')
 
-    def serialize(self, setter=False) -> bytes:
+    def serialize(self, data=None) -> bytes:
         """
 
         :param setter:

@@ -15,18 +15,18 @@ class Motor(DataStructure):
     def parse(data):
         motor = Motor()
 
-
-        motor.m1 = unpack('<H', bytes(data[0:2]))[0]
-        motor.m2 = unpack('<H', bytes(data[2:4]))[0]
-        motor.m3 = unpack('<H', bytes(data[4:6]))[0]
-        motor.m4 = unpack('<H', bytes(data[6:8]))[0]
-        # Motor 5 - 8 not used
+        if len(data) != 0:
+            motor.m1 = unpack('<H', bytes(data[0:2]))[0]
+            motor.m2 = unpack('<H', bytes(data[2:4]))[0]
+            motor.m3 = unpack('<H', bytes(data[4:6]))[0]
+            motor.m4 = unpack('<H', bytes(data[6:8]))[0]
+            # Motor 5 - 8 not used
 
         return motor
 
-    def serialize(self, setter=False) -> bytes:
+    def serialize(self, data=None) -> bytes:
         # Check if Setting or Getting
-        if not setter:
+        if not data:
             # If getting use super's serialize
             return super().serialize()
 

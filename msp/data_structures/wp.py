@@ -19,19 +19,20 @@ class WP(DataStructure):
     def parse(data) -> DataStructure:
         wp = WP()
 
-        wp.wp_no = unpack('<b', bytes([data[0]]))[0]
-        wp.lat = unpack('<i', bytes(data[1:5]))[0]
-        wp.lon = unpack('<i', bytes(data[5:9]))[0]
-        wp.alt_hold = unpack('<i', bytes(data[9:13]))[0]
-        wp.heading = unpack('<h', bytes(data[13:15]))[0]
-        wp.time_to_stay = unpack('<h', bytes(data[15:17]))[0]
-        wp.nav_flag = unpack('<b', bytes(data[17]))[0]
+        if len(data) != 0:
+            wp.wp_no = unpack('<b', bytes([data[0]]))[0]
+            wp.lat = unpack('<i', bytes(data[1:5]))[0]
+            wp.lon = unpack('<i', bytes(data[5:9]))[0]
+            wp.alt_hold = unpack('<i', bytes(data[9:13]))[0]
+            wp.heading = unpack('<h', bytes(data[13:15]))[0]
+            wp.time_to_stay = unpack('<h', bytes(data[15:17]))[0]
+            wp.nav_flag = unpack('<b', bytes(data[17]))[0]
 
         return wp
 
-    def serialize(self, setter=False) -> bytes:
+    def serialize(self, data=None) -> bytes:
         # Check if Setting or Getting
-        if not setter:
+        if not data:
             # If getting use super's serialize
             return super().serialize()
 
