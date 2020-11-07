@@ -1,12 +1,8 @@
 import serial
 import struct
 import time
-import queue
 
-from typing import List, Callable, Dict
-
-from threading import Thread, Lock
-from threading import current_thread
+from typing import List, Dict
 
 from msp.message_ids import MessageIDs
 
@@ -52,7 +48,7 @@ class MSP_Message:
         return result
 
 
-class MultiWii(Thread):
+class MultiWii:
     """
     MultiWii Protocol Class (MSP) used for interfacing with MSP flight controller boards
     """
@@ -60,38 +56,15 @@ class MultiWii(Thread):
     __FAILSAFE_VALUE = 2050
     __ANGLE_VALUE = 2050
 
-    def __init__(self, ser_port:str, print_debug: bool = False):
+    def __init__(self, ser_port: str, print_debug: bool = False):
         """
         Initializes the protocol to use the given serial port
 
         :param ser_port: /dev/ttyS0
         :param print_debug: Whether to print the debugging values
         """
-        super().__init__(name="Comms_Tx")
-
-        #: Used for toggling debug output
-        self.__print_debug = print_debug
-
-        # Private Attributes
-        self.__lock = Lock()
-
-        #: bool: Determines whether the protocol continues to run or not
-        self.__running = True
-
         #: bool: Determines whether the protocol is armed or not
         self.is_armed = None
-
-        #: Thread safe queue used for receiving feedback from the flight controller
-        self.__q = queue.Queue()
-        self.__timeout = 1.0/60
-
-        #: The thread used to receive feedback from the flight controller
-        self.__rx_thread = Thread(
-            target=self.__receive,
-            args=[],
-            name="Comms_Rx",
-            daemon=True
-        )
 
         #: The 2-way serial port used to communicate with the flight controller
         self.__ser = None
@@ -197,91 +170,25 @@ class MultiWii(Thread):
         wakeup = 2
         try:
             self.__ser.open()
-            self.__print("Waking up board on " + self.__ser.port + "...")
+            print("Waking up board on " + self.__ser.port + "...")
             for i in range(1, wakeup):
-                self.__print(wakeup - i)
+                print(wakeup - i)
                 time.sleep(1)
         except Exception as error:
             print("\n\nError opening " + self.__ser.port + " port.\n" + str(error) + "\n\n")
 
-        self.__print("Serial Communication Initialized")
+        print("Serial Communication Initialized")
 
-    def __on_thread(self, function, *args: List[any], **kwargs: List[any]) -> None:
-        """
-        Used to pass actions to the protocol for transmission to the flight controller
-        :param function: The function to be performed
-        :param args: Any positional arguments the function might require
-        :param kwargs: Any keyword arguments the function may require
-        :return: None
-        """
-        self.__q.put((function, args, kwargs))
-
-    def __print(self, data: str) -> None:
-        """
-        Prints the debugging output if :attr:`__print_debug` is enabled
-
-        :param data: The data to be printed
-        :return: None
-        """
-        if self.__print_debug:
-            print(data)
-
-    def __shutdown(self) -> None:
-        """
-        Terminates the protocol by setting :attr:`__running` to false
-
-        :return: None
-        """
-        print(current_thread().name + " - Shutting Down")
-        #: bool: Controls whether the protocol is running or not. If set to False the protocol shutdowns and will need to be reactivated
-        self.__running = False
-        self.__ser.close()
-
-
-
-    def __idle(self) -> None:
-        """
-        When not handling tx or rx the protocol will request general information from the flight controller
-
-        :return: None
-        """
-        # Request Data
-        self.__send(MessageIDs.RAW_IMU)
-        self.__send(MessageIDs.ALTITUDE)
-        self.__send(MessageIDs.ATTITUDE)
-        self.__send(MessageIDs.RC)
-        self.__send(MessageIDs.RAW_GPS)
-        # self.__send(MessageIDs.COMP_GPS)
-        # self.__send(MessageIDs.PID)
-        # self.__send(MessageIDs.MOTOR)
-        # self.__send(MessageIDs.ANALOG)
-        # self.__send(MessageIDs.RC_TUNING)
-        # self.__send(MessageIDs.MISC)
-        # self.__send(MessageIDs.WP)
-
-        time.sleep(.01)
-
-        # Send RC values
-        data = self.__rc_target.to_array()
-        self.__send(
-            MessageIDs.SET_RAW_RC,
-            len(data)*2,
-            data
-        )
-
-    def __send(self, msg: MSP_Message) -> int:
+    def __send(self, msg: MSP_Message) -> bool:
         """
         Crafts and sends the command packet to be sent over the serial interface to the Flight Controller.
 
         :param data_length: The number of 'shorts' required to transmit the data.
         :param code: The MessageID of the command to be sent
         :param data: The data (if required) to be transmitted. Can be left blank if the data_length = 0.
-        :return: None
+        :return: If the write was successful or not
         """
         try:
-            # Clear output buffer before writing
-            # self.__ser.reset_output_buffer()
-
             # Send message to FC
             byte_msg = msg.serialize()
 
@@ -292,13 +199,11 @@ class MultiWii(Thread):
             print("(" + str(error) + ")")
             traceback.print_exc()
 
-    def __receive(self) -> MSP_Message:
+    def __receive(self):
         """
         Waits for feedback from the flight controller, encodes them into useable python objects
         :return: None
         """
-        is_error = False
-
         # Get message header information
         header = self.__ser.read().decode('utf-8')
         if header == '$':
@@ -330,52 +235,20 @@ class MultiWii(Thread):
                             "Code: {}, Length:{}, Data: {}".format(code, length, data)
                             )
 
-        # Clear input buffer after reading
-        # self.__ser.flushInput()
-
         return self.__code_action_map[code](data)
 
     # Public Methods
-    def shutdown(self):
-        self.__on_thread(self.__shutdown)
+
+    def close(self):
+        self.__ser.close()
 
     def command(self, msg: MSP_Message):
+        if not self.__ser.is_open:
+            raise Exception("Serial Port not open yet")
+
         value = self.__send(msg)
         response = self.__receive()
         return response
-
-    def main(self):
-        try:
-            pass
-
-
-        finally:
-            pass
-
-    def run(self) -> None:
-        """
-        The main running loop for the protocol
-
-        Starts the receiver thread, and then waits for transmissions to be sent to the flight controller
-
-        :return: None
-        """
-
-        try:
-            self.__rx_thread.start()
-            while self.__running:
-                try:
-                    function, args, kwargs = self.__q.get(timeout=self.__timeout)
-                    function(*args, **kwargs)
-                except queue.Empty:
-                    self.__idle()
-
-        finally:
-            self.__print("Closing Serial Port")
-            self.__ser.close()
-
-    def calibrate_acc(self):
-        self.__on_thread(self.__send, [MessageIDs.ACC_CALIBRATION, []])
 
     # Setters
     def set_roll(self, value: float):
@@ -396,12 +269,12 @@ class MultiWii(Thread):
 
     def arm(self):
         """Arms the protocol"""
-        self.__print("Arming...")
+        print("Arming...")
         self.__rc_target.arm = ARM_VALUE
 
     def disarm(self):
         """Disarms the protocol"""
-        self.__print("Disarming...")
+        print("Disarming...")
         self.__rc_target.arm = Channel.MIN_VALUE
 
     def set_mma_values(self, values: List[int]):

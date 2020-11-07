@@ -13,7 +13,8 @@ class TestMultiWii(TestCase):
 
     @classmethod
     def tearDownClass(self) -> None:
-        self.msp.shutdown()
+        self.msp.close()
+        del self.msp
 
     def test_get_ident(self):
         msg = MSP_Message(MessageIDs.IDENT)
