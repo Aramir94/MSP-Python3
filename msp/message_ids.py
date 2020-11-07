@@ -38,8 +38,9 @@ class MessageIDs:
     SWITCH_RC_SERIAL = 210
     SET_HEAD = 211
     SET_SERVO_CONF = 212
+    SET_MOTOR = 214
 
-    ## Unknown
+    # Unknown
     # EEPROM_WRITE = 250
     # DEBUG = 254
     #
