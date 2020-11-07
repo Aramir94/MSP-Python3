@@ -27,16 +27,4 @@ class WP(DataStructure):
 
         return wp
 
-    def to_array(self) -> List[int]:
-        wp = [
-            self.wp_no,
-            self.lat,
-            self.lon,
-            self.alt_hold,
-            self.heading,
-            self.time_to_stay,
-            self.nav_flag
-        ]
-
-        return wp
 

@@ -20,12 +20,3 @@ class Analog(DataStructure):
         analog.amperage = data[3]
 
         return analog
-
-    def to_array(self) -> List[int]:
-        analog = [
-            self.vbat,
-            self.intPowerMeterSum,
-            self.rssi,
-            self.amperage
-        ]
-        return analog

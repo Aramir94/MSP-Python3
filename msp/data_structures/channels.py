@@ -1,11 +1,13 @@
+from struct import unpack
+
 from msp.data_structures.data_structure import DataStructure
+
 
 MAX_VALUE = 2100
 MIN_VALUE = 950
 MID_VALUE = 1500
 ARM_VALUE = 2050
 OFF_VALUE = 850
-
 
 
 class Channel(DataStructure):
@@ -36,13 +38,13 @@ class Channel(DataStructure):
     def parse(data):
         channel = Channel()
 
-        channel.roll = data[0]
-        channel.pitch = data[1]
-        channel.yaw = data[2]
-        channel.throttle = data[3]
-        channel.arm = data[4]
-        channel.angle = data[5]
-        channel.failsafe = data[6]
+        channel.roll = unpack('<H', bytes(data[:2]))[0]
+        channel.pitch = unpack('<H', bytes(data[2:4]))[0]
+        channel.yaw = unpack('<H', bytes(data[4:6]))[0]
+        channel.throttle = unpack('<H', bytes(data[6:8]))[0]
+        channel.arm = unpack('<H', bytes(data[8:10]))[0]
+        channel.angle = unpack('<H', bytes(data[10:12]))[0]
+        channel.failsafe = unpack('<H', bytes(data[12:14]))[0]
 
         return channel
 
@@ -61,18 +63,6 @@ class Channel(DataStructure):
         :return: Whether the channel is armed or not
         """
         return self.arm == ARM_VALUE
-
-    def to_array(self):
-        return [
-            self.roll,
-            self.pitch,
-            self.yaw,
-            self.throttle,
-            self.arm,
-            self.angle,
-            self.failsafe
-        ]
-
 
 class ArmedMissMatchError(Exception):
     pass

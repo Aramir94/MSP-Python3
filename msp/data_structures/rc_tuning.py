@@ -26,16 +26,3 @@ class RCTuning(DataStructure):
         rc_tuning.throttle_expo = 0
 
         return rc_tuning
-
-    def to_array(self) -> List[int]:
-        rc_tuning = [
-            self.rc_rate,
-            self.rc_expo,
-            self.roll_pitch_rate,
-            self.yaw_rate,
-            self.dyn_thr_pid,
-            self.throttle_mid,
-            self.throttle_expo
-        ]
-
-        return rc_tuning

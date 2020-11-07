@@ -17,22 +17,19 @@ class Status(DataStructure):
 
     @staticmethod
     def parse(data):
+        raise NotImplemented
         status = Status()
-        status.cycleTime = data[0]
-        status.i2c_errors_count = data[1]
-        status.sensor = data[2]
-        status.flag = data[3]
-        status.global_conf = data[4]
 
-        return status
+        # TODO Turn data into array
+        import struct
 
-    def to_array(self):
-        status = [
-            self.cycleTime,
-            self.i2c_errors_count,
-            self.sensor,
-            self.flag,
-            self.global_conf
-        ]
+        temp = bytearray(data[10])
+
+        status.cycleTime = struct.unpack('<H', bytes(data[:2]))[0]
+        status.i2c_errors_count = struct.unpack('<H', b'' + bytes(data[2:4]))[0]
+        status.sensor = struct.unpack('<H', b'' + bytes(data[4:6]))[0]
+        status.flag = struct.unpack('<HH', b'' + bytes(data[6:10]))[0]
+        temp = b'' + bytes(data[10])
+        status.global_conf = struct.unpack('<B', temp)[0]
 
         return status

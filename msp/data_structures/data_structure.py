@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
+import json
 
 
 class DataStructure(ABC):
@@ -13,6 +14,8 @@ class DataStructure(ABC):
         """
         raise NotImplemented
 
-    @abstractmethod
-    def to_array(self) -> List[int]:
-        raise NotImplemented
+    def __str__(self):
+        return self.to_json()
+
+    def to_json(self):
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)

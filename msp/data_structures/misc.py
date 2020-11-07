@@ -36,22 +36,3 @@ class Misc(DataStructure):
         misc.vbat_level_crit = 0
 
         return misc
-
-    def to_array(self) -> List[int]:
-        misc = [
-            self.int_power_trigger1,
-            self.conf_mini_throttle,
-            self.max_throttle,
-            self.min_command,
-            self.conf_failsafe_throttle,
-            self.plog_arm,
-            self.plog_lifetime,
-            self.conf_mag_declination,
-            self.vbat_scale,
-            self.vbat_level_warn1,
-            self.vbat_level_warn2,
-            self.vbat_level_crit
-        ]
-
-        return misc
-

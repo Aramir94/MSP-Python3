@@ -1,29 +1,18 @@
+import struct
+
 from msp.data_structures.data_structure import DataStructure
 
 
 class Altitude(DataStructure):
     def __init__(self):
-        self.estalt = 0
-        self.vario = 0
-
+        self.estalt = 0 # cm
+        self.vario = 0  # cm/s
 
     @staticmethod
     def parse(data):
         altitude = Altitude()
 
-        altitude.estalt = data[0]
-        altitude.vario = data[1]
-
-        return altitude
-
-    def to_array(self):
-        """
-
-        :return: [Estimated_altitude:cm,
-        """
-        altitude = [
-            self.estalt,
-            self.vario
-        ]
+        altitude.estalt = struct.unpack('<i', bytes(data[:4]))[0]
+        altitude.vario = struct.unpack('<h', bytes(data[4:]))[0]
 
         return altitude

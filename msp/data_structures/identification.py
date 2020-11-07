@@ -20,13 +20,3 @@ class Identification(DataStructure):
         identification.capability = data[3]
 
         return identification
-
-    def to_array(self):
-        identification = [
-            self.version,
-            self.multi_type,
-            self.msp_version,
-            self.capability
-        ]
-
-        return identification

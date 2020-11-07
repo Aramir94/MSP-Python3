@@ -26,16 +26,3 @@ class GPS(DataStructure):
         gps.ground_course = data[6]
 
         return gps
-
-    def to_array(self):
-        gps = [
-            self.fix,
-            self.numSat,
-            self.lat,
-            self.lon,
-            self.altitude,
-            self.speed,
-            self.ground_course
-        ]
-
-        return gps

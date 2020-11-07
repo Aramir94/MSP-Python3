@@ -19,13 +19,3 @@ class Motor(DataStructure):
         motor.m4 = data[3]
 
         return motor
-
-    def to_array(self):
-        motor = [
-            self.m1,
-            self.m2,
-            self.m3,
-            self.m4
-        ]
-
-        return motor

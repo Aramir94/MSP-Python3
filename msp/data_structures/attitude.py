@@ -1,11 +1,13 @@
+from struct import unpack
+
 from msp.data_structures.data_structure import DataStructure
 
 
 class Attitude(DataStructure):
     def __init__(self):
-        self.angx = 0
-        self.angy = 0
-        self.heading = 0
+        self.angx = 0       # Range [-1800, 1800] 1/10°
+        self.angy = 0       # Range [-900, 900] 1/10°
+        self.heading = 0    # Range [-180, 180]
 
         self.timestamp = None
 
@@ -13,16 +15,8 @@ class Attitude(DataStructure):
     def parse(data):
         attitude = Attitude()
 
-        attitude.angx = data[0]
-        attitude.angy = data[1]
-        attitude.heading = data[2]
+        attitude.angx = unpack('<h', bytes(data[:2]))[0]
+        attitude.angy = unpack('<h', bytes(data[2:4]))[0]
+        attitude.heading = unpack('<h', bytes(data[4:6]))[0]
 
-        return attitude
-
-    def to_array(self):
-        attitude = [
-            self.angx,
-            self.angy,
-            self.heading
-        ]
         return attitude

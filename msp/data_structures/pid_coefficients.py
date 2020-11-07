@@ -35,17 +35,3 @@ class PIDCoefficients(DataStructure):
 
         return pid_coefficients
 
-    def to_array(self):
-        pid = [
-            self.rp,
-            self.ri,
-            self.rd,
-            self.pp,
-            self.pi,
-            self.pd,
-            self.yp,
-            self.yi,
-            self.yd
-        ]
-
-        return pid

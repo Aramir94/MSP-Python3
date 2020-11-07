@@ -18,11 +18,3 @@ class CompGPS(DataStructure):
         comp_gps.update = data[2]
 
         return comp_gps
-
-    def to_array(self):
-        comp_gps = [
-            self.distance_to_home,
-            self.direction_to_home,
-            self.update
-        ]
-        return comp_gps

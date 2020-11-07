@@ -27,6 +27,31 @@ from msp.data_structures.servos import Servo
 from msp.data_structures.pid_coefficients import PIDCoefficients
 
 
+class MSP_Message:
+    def __init__(self, code: MessageIDs, data: [] = []):
+        self.code: MessageIDs = code
+        self.data: [] = data
+        self.length: int = len(self.data)
+
+    def serialize(self):
+        # Serialize header
+        result = '$'.encode('utf-8') + 'M'.encode('utf-8') + '<'.encode('utf-8')
+
+        # Serialize Data
+        result += self.length.to_bytes(1, 'little') + int(self.code).to_bytes(1, 'little')
+        for item in self.data:
+            result += int(item).to_bytes(2, 'little')
+
+        # Serialize Checksum
+        checksum = 0
+        for i in result[3:]:
+            checksum = checksum ^ i
+        result += checksum.to_bytes(1, 'little')
+
+        # Return result
+        return result
+
+
 class MultiWii(Thread):
     """
     MultiWii Protocol Class (MSP) used for interfacing with MSP flight controller boards
@@ -142,7 +167,9 @@ class MultiWii(Thread):
             MessageIDs.PIDNAMES: None,
             MessageIDs.WP: self.__wp.parse,
             MessageIDs.BOXIDS: None,
-            MessageIDs.SERVO_CONF: None
+            MessageIDs.SERVO_CONF: None,
+
+            MessageIDs.SET_RAW_RC: None
         }
 
         return code_action_map
@@ -208,6 +235,9 @@ class MultiWii(Thread):
         print(current_thread().name + " - Shutting Down")
         #: bool: Controls whether the protocol is running or not. If set to False the protocol shutdowns and will need to be reactivated
         self.__running = False
+        self.__ser.close()
+
+
 
     def __idle(self) -> None:
         """
@@ -229,6 +259,8 @@ class MultiWii(Thread):
         # self.__send(MessageIDs.MISC)
         # self.__send(MessageIDs.WP)
 
+        time.sleep(.01)
+
         # Send RC values
         data = self.__rc_target.to_array()
         self.__send(
@@ -237,7 +269,7 @@ class MultiWii(Thread):
             data
         )
 
-    def __send(self, code: MessageIDs, data_length=0, data=None) -> None:
+    def __send(self, msg: MSP_Message) -> int:
         """
         Crafts and sends the command packet to be sent over the serial interface to the Flight Controller.
 
@@ -246,82 +278,79 @@ class MultiWii(Thread):
         :param data: The data (if required) to be transmitted. Can be left blank if the data_length = 0.
         :return: None
         """
-        print("Sending: {0}".format(code))
-        if data is None:
-            data = []
-
-        total_data = ['$'.encode('utf-8'), 'M'.encode('utf-8'), '<'.encode('utf-8'), data_length, code] + data
-        structure = struct.pack('<2B%dH' % len(data), *total_data[3:len(total_data)])
-
-        checksum = 0
-        for i in structure:
-            checksum = checksum ^ i
-        total_data.append(checksum)
-
         try:
-            b = self.__ser.write(struct.pack('<3c2B%dHB' % len(data), *total_data))
-            # self.__ser.flushOutput()
+            # Clear output buffer before writing
+            # self.__ser.reset_output_buffer()
+
+            # Send message to FC
+            byte_msg = msg.serialize()
+
+            return self.__ser.write(byte_msg) == len(byte_msg)
         except Exception as error:
             import traceback
             print("\n\nError in send.")
             print("(" + str(error) + ")")
             traceback.print_exc()
 
-    def __receive(self) -> None:
+    def __receive(self) -> MSP_Message:
         """
         Waits for feedback from the flight controller, encodes them into useable python objects
         :return: None
         """
-        self.__print("Starting " + current_thread().name)
-        while self.__running:
-            try:
-                while True:
-                    header = self.__ser.read().decode('utf-8')
-                    if header == '$':
-                        header = header + self.__ser.read(2).decode('utf-8')
-                        break
+        is_error = False
 
-                data_length = struct.unpack('<B', self.__ser.read())[0]
-                code = struct.unpack('<B', self.__ser.read())[0]
-                data = self.__ser.read(data_length)
-                # TODO Add logging
-                self.__print("Receiving - " + str(code))
-                checksum = struct.unpack('<B', self.__ser.read())[0]
-                # TODO check Checksum
-                # total_data = ['$'.encode('utf-8'), 'M'.encode('utf-8'), '<'.encode('utf-8'), data_length, code] + data
-                # structure = struct.pack('<2B%dH' % len(data), *total_data[3:len(total_data)])
-                #
-                # checksum = 0
-                # for i in structure:
-                #     checksum = checksum ^ i
-                # total_data.append(checksum)
+        # Get message header information
+        header = self.__ser.read().decode('utf-8')
+        if header == '$':
+            header += self.__ser.read(1).decode('utf-8')
+            header += self.__ser.read(1).decode('utf-8')
 
-                print("code: " + str(code))
-                # print("data_length: " + str(data_length))
-                # print("data: " + str(data))
-                # print("checksum: " + str(checksum))
+        # Determine if an error was thrown
+        is_error = '!' in header
 
-                self.__ser.flushInput()
+        # Get message length
+        length = self.__ser.read(1)
+        length = struct.unpack('<B', length)[0]
 
-            except Exception as error:
-                import traceback
-                print("\n\nError in receive.")
-                print("(" + str(error) + ")")
-                traceback.print_exc()
-                return
+        # Get message code
+        code = self.__ser.read(1)
+        code = struct.unpack('<B', code)[0]
 
-            if not data_length > 0:
-                return
+        # Get message data
+        data = self.__ser.read(length)
 
-            temp = struct.unpack('<' + 'h' * int(data_length / 2), data)
-            try:
-                self.__code_action_map[code](temp)
-            except KeyError as err:
-                print(err)
+        # Get message checksum
+        checksum = struct.unpack('<B', self.__ser.read())[0]
+
+        # TODO check Checksum
+        # TODO Add logging
+
+        if is_error:
+            raise Exception("FC Responded with an error "
+                            "Code: {}, Length:{}, Data: {}".format(code, length, data)
+                            )
+
+        # Clear input buffer after reading
+        # self.__ser.flushInput()
+
+        return self.__code_action_map[code](data)
 
     # Public Methods
     def shutdown(self):
         self.__on_thread(self.__shutdown)
+
+    def command(self, msg: MSP_Message):
+        value = self.__send(msg)
+        response = self.__receive()
+        return response
+
+    def main(self):
+        try:
+            pass
+
+
+        finally:
+            pass
 
     def run(self) -> None:
         """

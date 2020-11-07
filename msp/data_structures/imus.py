@@ -35,18 +35,3 @@ class IMU(DataStructure):
 
         return imu
 
-    def to_array(self):
-        imu = [
-            self.ax,
-            self.ay,
-            self.az,
-            self.gx,
-            self.gy,
-            self.gz,
-            self.mx,
-            self.my,
-            self.mz
-        ]
-
-        return imu
-
