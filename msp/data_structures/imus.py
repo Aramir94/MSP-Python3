@@ -1,8 +1,12 @@
+from struct import unpack
+
 from msp.data_structures.data_structure import DataStructure
+from msp.message_ids import MessageIDs
 
 
 class IMU(DataStructure):
     def __init__(self):
+        super().__init__(MessageIDs.RAW_IMU)
         self.ax = 0
         self.ay = 0
         self.az = 0
@@ -15,23 +19,20 @@ class IMU(DataStructure):
         self.my = 0
         self.mz = 0
 
-        self.timestamp = None
-
     @staticmethod
     def parse(data):
         imu = IMU()
 
-        imu.ax = data[0]
-        imu.ay = data[1]
-        imu.az = data[2]
+        imu.ax = unpack('<h', bytes(data[:2]))[0]
+        imu.ay = unpack('<h', bytes(data[2:4]))[0]
+        imu.az = unpack('<h', bytes(data[4:6]))[0]
 
-        imu.gx = data[3]
-        imu.gy = data[4]
-        imu.gz = data[5]
+        imu.gx = unpack('<h', bytes(data[6:8]))[0]
+        imu.gy = unpack('<h', bytes(data[8:10]))[0]
+        imu.gz = unpack('<h', bytes(data[10:12]))[0]
 
-        imu.mx = data[6]
-        imu.my = data[7]
-        imumz = data[8]
+        imu.mx = unpack('<h', bytes(data[12:14]))[0]
+        imu.my = unpack('<h', bytes(data[14:16]))[0]
+        imu.mz = unpack('<h', bytes(data[16:18]))[0]
 
         return imu
-

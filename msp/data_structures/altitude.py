@@ -1,10 +1,12 @@
 import struct
 
 from msp.data_structures.data_structure import DataStructure
+from msp.message_ids import MessageIDs
 
 
 class Altitude(DataStructure):
     def __init__(self):
+        super().__init__(MessageIDs.ALTITUDE)
         self.estalt = 0 # cm
         self.vario = 0  # cm/s
 

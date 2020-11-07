@@ -1,7 +1,7 @@
-from struct import unpack
+from struct import unpack, pack
 
 from msp.data_structures.data_structure import DataStructure
-
+from msp.message_ids import MessageIDs
 
 MAX_VALUE = 2100
 MIN_VALUE = 950
@@ -12,6 +12,7 @@ OFF_VALUE = 850
 
 class Channel(DataStructure):
     def __init__(self):
+        super().__init__(MessageIDs.RC)
         self.roll = MID_VALUE
         self.pitch = MID_VALUE
         self.yaw = MID_VALUE
@@ -19,20 +20,6 @@ class Channel(DataStructure):
         self.arm = MIN_VALUE
         self.angle = MIN_VALUE
         self.failsafe = MIN_VALUE
-
-    @staticmethod
-    def degree_to_value(degree):
-        conversion_offset = 1500
-        diff = degree - 180
-        result = conversion_offset + (diff * 2.77)
-
-        return result
-
-    @staticmethod
-    def percent_to_value(percent):
-        conversion_offset = 1000
-        return percent/100 * conversion_offset + conversion_offset
-
 
     @staticmethod
     def parse(data):
@@ -44,34 +31,23 @@ class Channel(DataStructure):
         channel.throttle = unpack('<H', bytes(data[6:8]))[0]
         channel.arm = unpack('<H', bytes(data[8:10]))[0]
         channel.angle = unpack('<H', bytes(data[10:12]))[0]
-        channel.failsafe = unpack('<H', bytes(data[12:14]))[0]
+        # Channel 7 not used
+        # Channel 8 not used
 
         return channel
 
-    def arm(self):
-        """Sets the channel to an armed value"""
-        self.arm = ARM_VALUE
+    def serialize(self, setter=False):
+        # Check if Setting or Getting
+        if not setter:
+            # If getting use super's serialize
+            return super().serialize()
 
-    def disarm(self):
-        """Sets the channel to a disarmed value"""
-        self.arm = MIN_VALUE
+        # Serialize Data
+        result = int(16).to_bytes(1, 'little')
+        result += int(MessageIDs.SET_RAW_RC).to_bytes(1, 'little')
 
-    def is_armed(self) -> bool:
-        """
-        True if armed, False otherwise
+        # Serialize Checksum
+        result = DataStructure.get_header() + result + DataStructure.perform_checksum(result)
 
-        :return: Whether the channel is armed or not
-        """
-        return self.arm == ARM_VALUE
-
-class ArmedMissMatchError(Exception):
-    pass
-
-
-class AngleMissMatchError(Exception):
-    pass
-
-
-class FailsafeMissMatchError(Exception):
-    pass
-
+        # Return result
+        return result
